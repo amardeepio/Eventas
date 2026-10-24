@@ -47,7 +47,9 @@ Status: **complete locally**. Deployment intentionally skipped per project owner
 - [x] Response cache, per-IP + daily rate limits, timeouts, abort handling
 - [x] Prompt-injection boundaries for plan data and user goals
 - [x] Six personalized idea cards with save/hide
-- [x] Streaming assistant with quick prompts, stop, safe Markdown, `aria-live`
+- [x] Streaming assistant with quick prompts, thinking animation, stop, safe Markdown, `aria-live`
+- [x] Floating landing-page guide with INR/product/data answers
+- [x] Prompt-injection tripwire on both chatbots and rebalance goals
 - [x] Full Demo mode without a key
 
 ## M7 — Hardening ✅
@@ -58,10 +60,10 @@ Status: **complete locally**. Deployment intentionally skipped per project owner
 - [x] AA contrast fixes, 44 px targets, keyboard flow, reduced motion
 
 ## M8 — Tests + CI ✅
-- [x] 56 Vitest tests; 90% statement / 93% line coverage on `lib/`
+- [x] 90 Vitest tests; 92% statement / 95% line coverage on `lib/`
 - [x] Coverage thresholds enforced (85% statements/lines/functions)
-- [x] API tests for 200/400/429 and safe fallback
-- [x] 6 Playwright journeys including persistence, wizard, edit, assistant, axe
+- [x] API tests for 200/400/429, prompt-injection guards, and safe fallback
+- [x] 7 Playwright journeys including persistence, wizard, city autocomplete, edit, both chatbots, axe
 - [x] GitHub Actions CI for lint, typecheck, coverage, build, and e2e
 
 ## M9 — Documentation + submission prep ✅ (deployment skipped)

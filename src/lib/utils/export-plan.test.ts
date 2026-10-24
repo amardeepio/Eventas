@@ -8,7 +8,7 @@ describe("plan export", () => {
   it("includes the brief, budget, timeline, vendors, and a safety note", () => {
     const plan = buildPlan(getSampleBrief("community", new Date("2026-10-24")));
     const markdown = planToMarkdown(plan);
-    expect(markdown).toContain("# Maple Street Spring Festival");
+    expect(markdown).toContain("# Indiranagar Spring Festival");
     expect(markdown).toContain("## Budget");
     expect(markdown).toContain("## Timeline");
     expect(markdown).toContain("## Vendor checklist");
@@ -18,7 +18,7 @@ describe("plan export", () => {
 
 describe("formatting", () => {
   it("formats money, dates, and countdowns deterministically", () => {
-    expect(formatMoney(1234)).toBe("$1,234");
+    expect(formatMoney(1234)).toBe("₹1,234");
     expect(formatDate("2027-01-02")).toContain("2027");
     expect(daysUntil("2026-10-30", new Date("2026-10-24T18:00:00Z"))).toBe(6);
     expect(clamp(12, 0, 10)).toBe(10);

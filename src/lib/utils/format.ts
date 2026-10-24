@@ -1,6 +1,6 @@
-export const money = new Intl.NumberFormat("en-US", {
+export const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
-  currency: "USD",
+  currency: "INR",
   maximumFractionDigits: 0,
 });
 
@@ -10,7 +10,7 @@ export function formatMoney(value: number): string {
 
 export function formatDate(value: string, options?: Intl.DateTimeFormatOptions): string {
   const date = parseISODate(value);
-  return new Intl.DateTimeFormat("en-US", options ?? {
+  return new Intl.DateTimeFormat("en-IN", options ?? {
     month: "short",
     day: "numeric",
     year: "numeric",

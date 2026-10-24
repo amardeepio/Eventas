@@ -8,7 +8,7 @@ export const communityPack: DomainPack = {
   description: "A safe, inclusive gathering with clear owners and a realistic run of show.",
   terminology: { eventDay: "event day", host: "Organizing team", guest: "attendee" },
   defaultGuests: 300,
-  defaultBudget: 18000,
+  defaultBudget: 500000,
   horizonMonths: 6,
   budget: [
     { id: "venue", label: "Venue & site", weight: 18, floor: 5, color: "#a5533d", description: "Site rental, shelters, fencing, toilets, and cleaning." },
@@ -78,8 +78,8 @@ export const communityPack: DomainPack = {
     { kind: "Favors", title: "A useful takeaway", description: "Replace generic swag with a printed neighborhood resource map or seeds from a local grower.", tags: ["sustainable", "useful"] },
   ],
   sample: {
-    eventType: "community", title: "Maple Street Spring Festival", hostNames: "Maple Street Association", weeksFromNow: 22,
-    guests: 350, budget: 20000, location: "Portland, OR", costLevel: "average",
+    eventType: "community", title: "Indiranagar Spring Festival", hostNames: "Indiranagar Residents’ Association", weeksFromNow: 22,
+    guests: 350, budget: 500000, location: "Bengaluru, Karnataka", costLevel: "average",
     priorities: ["programming", "permits", "catering"], vibe: "festival",
     notes: "A free neighborhood festival with local performers, food stalls, family activities, and a quiet zone.",
     constraints: ["Step-free routes", "Multilingual signage", "Quiet sensory space"],

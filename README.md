@@ -2,7 +2,7 @@
 
 **A GenAI planning studio for weddings, birthdays, and community events.**
 
-Tell Eventas the date, guest count, budget, place, and what matters most. It returns a budget that reconciles to the dollar, a realistic countdown, a vendor checklist with the right questions to ask, and personalized ideas. A context-aware assistant can explain any decision and propose safe budget trade-offs.
+Tell Eventas the date, guest count, budget, place, and what matters most. It returns a budget that reconciles to the rupee, a realistic countdown, a vendor checklist with the right questions to ask, and personalized ideas. A context-aware assistant can explain any decision and propose safe budget trade-offs.
 
 > **Chosen vertical: weddings.** The wedding plan is the flagship experience and the primary demo. The same tested engine also powers birthday and community-event **domain packs**, which demonstrates that the planning logic generalizes without duplicating code.
 
@@ -28,13 +28,13 @@ This is the core design decision behind the project: *AI for imagination, logic 
 ## What it does
 
 ### 1. A 60-second brief
-Choose an event type, then answer five short steps: date and guests, place and budget, top three priorities, and the feeling you want. A live summary updates as you type, showing the countdown, cost per guest, and a smart budget preview.
+Choose an event type, then answer five short steps: date and guests, place and budget, top three priorities, and the feeling you want. The city field defaults to New Delhi and autocompletes Indian cities and states. A live summary updates as you type, showing the countdown, cost per guest, and a smart budget preview in INR.
 
 ### 2. A dashboard that makes decisions easier
 | View | What it answers |
 | --- | --- |
 | **Overview** | How healthy is the plan? What are the next three moves? |
-| **Budget** | Where is every dollar going? What is planned vs. actual? |
+| **Budget** | Where is every rupee going? What is planned vs. actual? |
 | **Timeline** | What needs to happen, by when, and what is overdue? |
 | **Vendors** | Who do we need, what should we ask, and what should worry us? |
 | **Ideas** | What would make this feel personal, at this budget? |
@@ -45,12 +45,27 @@ The copilot receives a compact snapshot of the brief, budget totals, next tasks,
 - “Where am I overspending?”
 - “What should I do this month?”
 - “Help me prioritize vendors.”
-- “We need to save $2,000 without cutting food.”
+- “We need to save ₹1,00,000 without cutting food.”
 
 Budget changes are never applied silently. The **Rebalance with AI** flow returns a validated before-and-after allocation, and the user explicitly applies or cancels it.
 
-### 4. Local-first and instant
+### 4. A landing-page product guide
+A floating **Ask about Eventas** button answers questions about the product without requiring a plan: how budgeting works, the three event types, AI use, and exactly how data is stored. It is rate-limited and protected by the same prompt-injection tripwire as the planning assistant.
+
+### 5. Local-first and instant
 No account, database, or onboarding email. The active plan and draft live in `localStorage`, are schema-validated on read, and can be exported as Markdown for printing or sharing.
+
+### How data is saved
+
+| Data | Where it lives | Details |
+| --- | --- | --- |
+| Active plan | Browser `localStorage` under `eventas.plan.v1` | Brief, budget, tasks, vendors, ideas, and AI copy. Validated with Zod on every read; corrupt or old data is discarded. |
+| Wizard draft | Browser `localStorage` under `eventas.draft.v2` | Partial brief, so a refresh does not lose progress. Removed after the plan is created. |
+| AI context | Sent to Groq only when AI is used | A compact snapshot of the brief, budget totals, next tasks, vendor statuses, and saved ideas. No account, auth token, or payment data exists. |
+| API key | Server environment only | Read from `GROQ_API_KEY`; never sent to the browser or written to the plan. |
+| Server storage | None | Eventas has no database and does not persist plans server-side. Demo mode makes no external AI call. |
+
+Deleting the plan in the studio footer removes it from `localStorage`. Clearing site data also removes it. Plans do not sync between devices or browsers.
 
 ---
 
@@ -183,6 +198,7 @@ All routes accept JSON, enforce a **250 KB body cap**, validate with Zod, reject
 | `POST /api/ai/plan` | `{ plan }` | `{ headline, insights[3], ideas[6], mode }` |
 | `POST /api/ai/rebalance` | `{ plan, goal }` | `{ rationale, allocation, mode }` |
 | `POST /api/assistant` | `{ plan, messages[1–20] }` | streamed plain text |
+| `POST /api/site-assistant` | `{ messages[1–20] }` | streamed product guidance |
 | `GET /api/health` | — | `{ ok, aiConfigured }` |
 
 The client validates every AI response again before merging it. An invalid model response is discarded, never rendered as truth.
@@ -191,7 +207,8 @@ The client validates every AI response again before merging it. An invalid model
 
 - **Server-only key.** `server-only` import guard; no `NEXT_PUBLIC_` secret; the production bundle is grepped in review.
 - **Schema validation both ways.** The model receives a JSON schema instruction and its output is parsed by Zod.
-- **Untrusted data delimiters.** Plan data is wrapped in `<event_data>`; goals in `<user_goal>`; the system prompt says to ignore instructions inside them.
+- **Untrusted data delimiters.** Plan data is wrapped in `<event_data>`, goals in `<user_goal>`, and chat turns in `<user_message>` / `<user_question>`; the system prompt says to ignore instructions inside them.
+- **Prompt-injection tripwire.** Both chatbots scan every chat turn (including forged assistant turns) for role-change, prompt-extraction, secret-extraction, and delimiter-injection patterns *before* any model call. A match returns a fixed refusal with `X-Eventas-Guard: blocked`. The rebalance goal gets the same treatment. This is defence in depth, not a claim of perfect detection; tests cover true positives, false positives, and zero-width-character evasion.
 - **Bounded context.** Only a compact snapshot is sent, with history capped at 12 messages and 2,000 characters per message.
 - **Rate limits.** 12 requests/minute per IP plus a 300/day global cap per instance.
 - **Timeouts and aborts.** 45s for JSON calls, 60s for streams, aborted when the client disconnects.
@@ -274,17 +291,19 @@ Check available models at [console.groq.com/docs/models](https://console.groq.co
 
 ## Testing
 
-**56 automated tests across 8 files**, with **90% statement / 93% line coverage** on `lib/` and enforced thresholds.
+**90 automated tests across 10 files**, with **92% statement / 95% line coverage** on `lib/` and enforced thresholds.
 
 | Layer | Coverage |
 | --- | --- |
 | Domain engine | Budget sums, priority shifts, guest scaling, cost index, floors, contingency, leap day, past dates, overdue ordering, pack invariants |
+| Cities | New Delhi default, Indian-only suggestions, prefix/state search, no international options |
 | Validation | Brief, plan, AI output, assistant limits, unknown keys, corrupt persistence |
 | AI | JSON parsing, schema rejection, provider errors, SSE stream transformation, cache TTL/LRU, rate-limit windows, rebalance safety |
-| API | 200 demo contracts, 400 malformed input, 429 abuse, safe fallback |
+| Injection | Role-change, prompt/secret extraction, delimiter attempts, zero-width evasion, ordinary-question false positives |
+| API | 200 demo contracts, 400 malformed input, 429 abuse, guarded chatbot responses, safe fallback |
 | Storage | Hydration, create/update/reset, persistence, enrichment merge, malformed responses |
 | Presentation | axe scan of landing, chart text alternatives |
-| Browser | Wedding onboarding → budget edit → reload persistence; assistant context; full birthday wizard; mobile/desktop screenshots; axe on landing, wizard, dashboard, assistant |
+| Browser | Wedding onboarding → budget edit → reload persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant |
 
 Playwright runs against a **production build** on port `3100` (`npm run build && npm run start -- --port 3100`). CI runs lint, typecheck, coverage, build, and browser tests on Node 22 with **no secrets**, so Demo mode is exercised too.
 
@@ -293,7 +312,7 @@ Playwright runs against a **production build** on port `3100` (`npm run build &&
 ## Assumptions
 
 - **Single active plan per browser.** Local-first keeps the product simple and private; starting a new plan replaces the active one after explicit deletion.
-- **USD and US-style date formatting.** Costs are planning estimates, not live vendor quotes.
+- **INR and Indian date formatting.** Budgets use the rupee and Indian digit grouping (for example ₹25,00,000); costs are planning estimates, not live vendor quotes.
 - **No real vendor marketplace, availability, or bookings.** Vendor questions and red flags are guidance, not endorsements.
 - **No authentication or cloud sync.** Plans never leave the browser except for the compact AI context.
 - **Cost estimates are directional.** The engine allocates a user-provided budget; it does not scrape local price data.
@@ -321,7 +340,7 @@ Playwright runs against a **production build** on port `3100` (`npm run build &&
 | **Code quality** | Feature-based structure, strict TypeScript, pure engines, domain-pack contract, shared Zod schemas, small focused components |
 | **Security** | Server-only AI, output validation, prompt-injection delimiters, rate limits, payload caps, CSP and headers, no raw HTML, versioned local storage |
 | **Efficiency** | Deterministic baseline, cached AI, no assets, no chart library, on-demand AI, static landing page |
-| **Testing** | 56 tests, 90%+ coverage on `lib/`, API contracts, browser journeys, axe audit, CI |
+| **Testing** | 90 tests, 92%+ coverage on `lib/`, API contracts, browser journeys, axe audit, CI |
 | **Accessibility** | Keyboard flows, focus management, live regions, chart alternatives, AA contrast, reduced motion, 44px targets |
 | **Problem alignment** | Weddings as the flagship vertical, plus working birthday and community packs with distinct budgets, timelines, vendors, and ideas |
 

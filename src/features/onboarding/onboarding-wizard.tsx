@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, CalendarDays, Check, Heart, LoaderCircle, MapPin
 import { Button } from "@/components/ui/button";
 import { Card, Eyebrow } from "@/components/ui/card";
 import { Field, Input, Textarea } from "@/components/ui/field";
+import { CityCombobox } from "@/components/ui/city-combobox";
 import { Logo } from "@/components/ui/logo";
 import { EVENT_TYPES, type Brief, type EventType } from "@/lib/domain/types";
 import { getPack, getSampleBrief } from "@/lib/domain/packs";
@@ -25,7 +26,7 @@ function initialBrief(type: EventType = "wedding"): Brief {
   return {
     eventType: type, title: type === "wedding" ? "Our wedding" : `Our ${pack.label.toLowerCase()}`,
     hostNames: "", date: toISODate(addDays(new Date(), pack.horizonMonths * 30)),
-    guests: pack.defaultGuests, budget: pack.defaultBudget, location: "", costLevel: "average",
+    guests: pack.defaultGuests, budget: pack.defaultBudget, location: "New Delhi, Delhi", costLevel: "average",
     priorities: pack.priorities.slice(0, 3).map((priority) => priority.id), vibe: pack.vibes[0]?.id ?? "modern",
     notes: "", constraints: [],
   };
@@ -73,18 +74,18 @@ export function OnboardingWizard() {
       return;
     }
     try {
-      const raw = localStorage.getItem("eventas.draft.v1");
+      const raw = localStorage.getItem("eventas.draft.v2");
       if (raw && !params.get("type") && !interactedRef.current) {
         const result = briefSchema.partial().safeParse(JSON.parse(raw));
         if (result.success) setBrief((current) => ({ ...current, ...result.data }));
       }
-    } catch { localStorage.removeItem("eventas.draft.v1"); }
+    } catch { localStorage.removeItem("eventas.draft.v2"); }
      
     setDraftLoaded(true);
   }, [params, plan, createPlan, enrichWithAi, router]);
 
   useEffect(() => {
-    if (draftLoaded && !creating) localStorage.setItem("eventas.draft.v1", JSON.stringify(brief));
+    if (draftLoaded && !creating) localStorage.setItem("eventas.draft.v2", JSON.stringify(brief));
   }, [brief, draftLoaded, creating]);
 
   const preview = useMemo(() => allocateBudget(pack, brief).sort((a, b) => b.recommended - a.recommended).slice(0, 4), [pack, brief]);
@@ -125,7 +126,7 @@ export function OnboardingWizard() {
     if (!validate(4)) return;
     setCreating(true);
     const created = createPlan(brief);
-    localStorage.removeItem("eventas.draft.v1");
+    localStorage.removeItem("eventas.draft.v2");
     void enrichWithAi(created);
     router.push("/plan");
   }
@@ -166,9 +167,9 @@ export function OnboardingWizard() {
           {step === 2 && <>
             <Eyebrow>Place and practicalities</Eyebrow><h1 id="step-title" className="mt-3 font-display text-5xl font-medium tracking-[-.04em]">Ground it in reality.</h1><p className="mt-4 text-[15px] text-muted">We use this to make the budget fit your guest count and local cost level.</p>
             <div className="mt-9 grid gap-6">
-              <Field label="City or area" htmlFor="location" error={errors.location}><div className="relative"><MapPin className="absolute top-4 left-4 text-muted" size={17} aria-hidden="true" /><Input id="location" className="pl-11" value={brief.location} onChange={(e) => update("location", e.target.value)} aria-invalid={Boolean(errors.location)} maxLength={120} placeholder="Austin, TX" /></div></Field>
-              <Field label="Total event budget" hint="USD" htmlFor="budget" error={errors.budget}><div className="relative"><span className="absolute top-3.5 left-4 text-muted">$</span><Input id="budget" className="pl-9 font-display text-2xl" type="number" min={100} step={100} value={brief.budget} onChange={(e) => update("budget", Number(e.target.value))} aria-invalid={Boolean(errors.budget)} /></div></Field>
-              <input aria-label={`Budget slider, ${formatMoney(brief.budget)}`} type="range" min={500} max={brief.eventType === "wedding" ? 100000 : 50000} step={500} value={Math.min(brief.budget, brief.eventType === "wedding" ? 100000 : 50000)} onChange={(e) => update("budget", Number(e.target.value))} className="h-2 w-full cursor-pointer accent-clay" />
+              <Field label="City or area" htmlFor="location" error={errors.location}><CityCombobox value={brief.location} onChange={(value) => update("location", value)} error={errors.location} /></Field>
+              <Field label="Total event budget" hint="INR" htmlFor="budget" error={errors.budget}><div className="relative"><span className="absolute top-3.5 left-4 text-muted">₹</span><Input id="budget" className="pl-9 font-display text-2xl" type="number" min={1000} step={10000} value={brief.budget} onChange={(e) => update("budget", Number(e.target.value))} aria-invalid={Boolean(errors.budget)} /></div></Field>
+              <input aria-label={`Budget slider, ${formatMoney(brief.budget)}`} type="range" min={10000} max={brief.eventType === "wedding" ? 10000000 : 5000000} step={10000} value={Math.min(brief.budget, brief.eventType === "wedding" ? 10000000 : 5000000)} onChange={(e) => update("budget", Number(e.target.value))} className="h-2 w-full cursor-pointer accent-clay" />
               <fieldset><legend className="mb-3 text-sm font-semibold">How expensive is your area?</legend><div className="grid grid-cols-3 gap-3">{(["low", "average", "high"] as const).map((level) => <label key={level} className={cn("cursor-pointer rounded-2xl border px-3 py-4 text-center transition", brief.costLevel === level ? "border-clay bg-blush" : "border-line bg-paper")}><input type="radio" name="costLevel" className="sr-only" checked={brief.costLevel === level} onChange={() => update("costLevel", level)} /><span className="block text-sm font-semibold capitalize">{level}</span><span className="mt-1 block text-[11px] text-muted">{level === "low" ? "Lower-cost market" : level === "average" ? "Typical city" : "Major metro"}</span></label>)}</div></fieldset>
             </div>
           </>}

@@ -8,7 +8,7 @@ export const weddingPack: DomainPack = {
   description: "A thoughtful plan for the ceremony, the celebration, and everything between.",
   terminology: { eventDay: "wedding day", host: "Couple", guest: "guest" },
   defaultGuests: 120,
-  defaultBudget: 30000,
+  defaultBudget: 2500000,
   horizonMonths: 12,
   budget: [
     { id: "venue", label: "Venue & rentals", weight: 24, floor: 8, color: "#a5533d", perGuest: true, description: "Ceremony and reception space, tables, chairs, and basic rentals." },
@@ -87,7 +87,7 @@ export const weddingPack: DomainPack = {
   ],
   sample: {
     eventType: "wedding", title: "Maya & Dev’s wedding", hostNames: "Maya & Dev", weeksFromNow: 36,
-    guests: 120, budget: 30000, location: "Austin, TX", costLevel: "average",
+    guests: 120, budget: 2500000, location: "Udaipur, Rajasthan", costLevel: "average",
     priorities: ["catering", "photo", "music"], vibe: "garden",
     notes: "An outdoor ceremony, long dinner tables, and a dance floor that works for every generation.",
     constraints: ["Vegetarian options", "Step-free access"],

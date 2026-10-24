@@ -3,10 +3,24 @@ import { ArrowRight, ArrowUpRight, CalendarDays, Check, Flower2, Heart, MapPin, 
 import { Logo } from "@/components/ui/logo";
 import { Eyebrow } from "@/components/ui/card";
 import { SavedPlanLink } from "./saved-plan-link";
-import { packList } from "@/lib/domain/packs";
+import { SiteAssistant } from "@/features/site-assistant/site-assistant";
+import { getPack, getSampleBrief, packList } from "@/lib/domain/packs";
+import { allocateBudget } from "@/lib/domain/engine/budget";
+import { daysUntil, formatMoney } from "@/lib/utils/format";
 
 const eventIcons = { wedding: Heart, birthday: PartyPopper, community: Users } as const;
 const eventNumbers = { wedding: "01", birthday: "02", community: "03" } as const;
+
+// A stable illustrative preview: no request-time values, so the landing page stays static.
+const previewNow = new Date("2026-10-24T00:00:00Z");
+const previewBrief = getSampleBrief("wedding", previewNow);
+const previewBudget = allocateBudget(getPack("wedding"), previewBrief);
+const previewTotal = previewBudget.reduce((sum, item) => sum + item.planned, 0);
+const previewItems = ["catering", "venue", "photo"].flatMap((id) => {
+  const item = previewBudget.find((category) => category.id === id);
+  return item ? [{ ...item, width: `${Math.round(item.planned / previewTotal * 100)}%` }] : [];
+});
+const previewDays = daysUntil(previewBrief.date, previewNow);
 
 export function Landing() {
   return <div className="min-h-screen overflow-hidden">
@@ -68,7 +82,7 @@ export function Landing() {
           <ol className="divide-y divide-line border-y border-line">
             {[
               { icon: MapPin, n: "01", title: "Tell us what matters", text: "Date, place, people, budget, priorities, and the feeling you want. No endless questionnaire." },
-              { icon: WalletCards, n: "02", title: "Get a plan that adds up", text: "A tested planning engine allocates every dollar and turns your date into practical, ordered milestones." },
+              { icon: WalletCards, n: "02", title: "Get a plan that adds up", text: "A tested planning engine allocates every rupee and turns your date into practical, ordered milestones." },
               { icon: Sparkles, n: "03", title: "Make it unmistakably yours", text: "AI adds personal ideas and clear next steps. Ask anything, rebalance safely, and keep control." },
             ].map(({ icon: Icon, n, title, text }) => <li key={n} className="grid gap-4 py-8 sm:grid-cols-[44px_1fr_auto] sm:items-start"><span className="grid size-11 place-items-center rounded-full border border-line bg-paper text-clay"><Icon size={19} strokeWidth={1.6} aria-hidden="true" /></span><div><h3 className="font-display text-2xl font-medium">{title}</h3><p className="mt-2 max-w-lg text-sm leading-6 text-muted">{text}</p></div><span className="hidden font-display text-sm text-muted/50 sm:block">{n}</span></li>)}
           </ol>
@@ -86,17 +100,18 @@ export function Landing() {
       </section>
     </main>
     <footer className="mx-auto flex max-w-[1440px] flex-col gap-5 border-t border-line px-5 py-8 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12"><Logo /><p>Thoughtful plans for meaningful gatherings.</p><p>Eventas · Local-first planning</p></footer>
+    <SiteAssistant />
   </div>;
 }
 
 function PlanningPreview() {
-  return <div className="relative mx-auto w-full max-w-[590px] animate-rise lg:mx-0" style={{ animationDelay: ".12s" }} aria-label="Preview of an Eventas wedding plan" role="img">
+  return <div className="relative mx-auto w-full max-w-[590px] lg:mx-0" aria-label="Preview of an Eventas wedding plan" role="img">
     <div className="absolute -top-8 -right-5 size-32 rounded-full border border-gold/30" aria-hidden="true" />
     <div className="relative rotate-[1.5deg] rounded-[2rem] border border-white/80 bg-paper p-5 shadow-[0_35px_90px_rgba(63,45,30,.14)] transition duration-500 hover:rotate-0 sm:p-7">
-      <div className="flex items-start justify-between border-b border-line pb-5"><div><p className="text-[10px] font-bold tracking-[.17em] text-clay uppercase">Your wedding plan</p><h2 className="mt-2 font-display text-[28px] font-medium tracking-[-.03em]">Maya & Dev</h2><p className="mt-1 flex items-center gap-1.5 text-xs text-muted"><MapPin size={12} aria-hidden="true" /> Austin · 120 guests</p></div><span className="rounded-full bg-[#e9eee7] px-3 py-1.5 text-[10px] font-bold text-sage">ON TRACK</span></div>
+      <div className="flex items-start justify-between border-b border-line pb-5"><div><p className="text-[10px] font-bold tracking-[.17em] text-clay uppercase">Your wedding plan</p><h2 className="mt-2 font-display text-[28px] font-medium tracking-[-.03em]">Maya & Dev</h2><p className="mt-1 flex items-center gap-1.5 text-xs text-muted"><MapPin size={12} aria-hidden="true" /> Udaipur · 120 guests</p></div><span className="rounded-full bg-[#e9eee7] px-3 py-1.5 text-[10px] font-bold text-sage">ON TRACK</span></div>
       <div className="grid gap-5 py-6 sm:grid-cols-[140px_1fr] sm:items-center">
-        <div className="relative mx-auto size-[130px]"><svg viewBox="0 0 130 130" className="-rotate-90" aria-hidden="true"><circle cx="65" cy="65" r="52" fill="none" stroke="#eee9df" strokeWidth="9"/><circle cx="65" cy="65" r="52" fill="none" stroke="#a5533d" strokeWidth="9" strokeLinecap="round" strokeDasharray="327" strokeDashoffset="92"/></svg><div className="absolute inset-0 grid place-content-center text-center"><strong className="font-display text-3xl font-medium">252</strong><span className="text-[9px] font-bold tracking-wider text-muted uppercase">days to go</span></div></div>
-        <div><div className="mb-4 flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-wider text-muted uppercase">Total budget</p><p className="mt-1 font-display text-2xl">$30,000</p></div><p className="text-xs font-semibold text-sage">100% allocated</p></div>{[{ name: "Food & drinks", width: "82%", color: "#c77b57" }, { name: "Venue & rentals", width: "75%", color: "#a5533d" }, { name: "Photo & film", width: "42%", color: "#5d7161" }].map((item) => <div key={item.name} className="mt-3"><div className="mb-1.5 flex justify-between text-[10px]"><span>{item.name}</span><span className="text-muted">{item.width === "82%" ? "$7,950" : item.width === "75%" ? "$7,120" : "$3,300"}</span></div><div className="h-1.5 rounded-full bg-soft"><div className="h-full rounded-full" style={{ width: item.width, background: item.color }} /></div></div>)}</div>
+        <div className="relative mx-auto size-[130px]"><svg viewBox="0 0 130 130" className="-rotate-90" aria-hidden="true"><circle cx="65" cy="65" r="52" fill="none" stroke="#eee9df" strokeWidth="9"/><circle cx="65" cy="65" r="52" fill="none" stroke="#a5533d" strokeWidth="9" strokeLinecap="round" strokeDasharray="327" strokeDashoffset="92"/></svg><div className="absolute inset-0 grid place-content-center text-center"><strong className="font-display text-3xl font-medium">{previewDays}</strong><span className="text-[9px] font-bold tracking-wider text-muted uppercase">days to go</span></div></div>
+        <div><div className="mb-4 flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-wider text-muted uppercase">Total budget</p><p className="mt-1 font-display text-2xl">{formatMoney(previewTotal)}</p></div><p className="text-xs font-semibold text-sage">100% allocated</p></div>{previewItems.map((item) => <div key={item.id} className="mt-3"><div className="mb-1.5 flex justify-between text-[10px]"><span>{item.name}</span><span className="text-muted">{formatMoney(item.planned)}</span></div><div className="h-1.5 rounded-full bg-soft"><div className="h-full rounded-full" style={{ width: item.width, background: item.color }} /></div></div>)}</div>
       </div>
       <div className="rounded-2xl bg-bone p-4"><div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-bold tracking-wider text-muted uppercase">Up next</p><CalendarDays size={14} className="text-muted" aria-hidden="true" /></div>{["Tour and book the venue", "Book photographer and caterer"].map((task, index) => <div key={task} className="flex items-center gap-3 border-t border-line/70 py-2.5 text-xs first:border-0"><span className="grid size-5 place-items-center rounded-full border border-clay/30 text-[9px] text-clay">{index + 1}</span><span className="font-medium">{task}</span><span className="ml-auto text-[10px] text-muted">{index ? "Nov 12" : "Oct 28"}</span></div>)}</div>
     </div>

@@ -3,6 +3,7 @@ import { badRequest, checkAiRateLimit, readJson } from "@/lib/ai/http";
 import { AI_CONTEXT_RULES, rebalancePrompt } from "@/lib/ai/prompts";
 import { generateJson, hasGroqKey } from "@/lib/ai/groq";
 import { isSafeAllocation, proposeRebalance } from "@/lib/ai/rebalance";
+import { detectPromptInjection } from "@/lib/ai/injection";
 
 
 export async function POST(request: Request) {
@@ -12,6 +13,12 @@ export async function POST(request: Request) {
     const input = rebalanceRequestSchema.safeParse(await readJson(request));
     if (!input.success) return badRequest();
     const { plan, goal } = input.data;
+    if (detectPromptInjection(goal)) {
+      return Response.json(
+        { ...proposeRebalance(plan, "save 5%"), mode: "demo" },
+        { headers: { "X-Eventas-Guard": "blocked" } },
+      );
+    }
     if (hasGroqKey()) {
       try {
         const result = await generateJson({

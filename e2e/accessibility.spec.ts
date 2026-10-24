@@ -12,6 +12,10 @@ test("core journeys have no serious accessibility violations", async ({ page }) 
   await page.goto("/");
   await page.waitForTimeout(900);
   expect(await seriousViolations(page)).toEqual([]);
+  await page.getByRole("button", { name: "Ask about Eventas" }).click();
+  await page.waitForTimeout(400);
+  expect(await seriousViolations(page)).toEqual([]);
+  await page.keyboard.press("Escape");
 
   await page.goto("/new");
   await page.waitForTimeout(500);

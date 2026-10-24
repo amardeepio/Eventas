@@ -59,13 +59,13 @@ export const rebalanceResponseSchema = z.object({
   rationale: z.string().max(800),
   allocation: z.record(z.string(), z.number().nonnegative()),
 });
-export const assistantRequestSchema = z.object({
-  plan: planSchema,
-  messages: z.array(z.object({
-    role: z.enum(["user", "assistant"]),
-    content: z.string().trim().min(1).max(2000),
-  })).min(1).max(20),
-});
+const chatMessagesSchema = z.array(z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().trim().min(1).max(2000),
+})).min(1).max(20);
+
+export const assistantRequestSchema = z.object({ plan: planSchema, messages: chatMessagesSchema });
+export const siteAssistantRequestSchema = z.object({ messages: chatMessagesSchema });
 export const aiPlanRequestSchema = z.object({ plan: planSchema });
 export const rebalanceRequestSchema = z.object({
   plan: planSchema,

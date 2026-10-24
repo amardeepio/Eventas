@@ -8,7 +8,7 @@ export const birthdayPack: DomainPack = {
   description: "A celebration with personality, without the last-minute scramble.",
   terminology: { eventDay: "party day", host: "Host", guest: "guest" },
   defaultGuests: 50,
-  defaultBudget: 5000,
+  defaultBudget: 150000,
   horizonMonths: 3,
   budget: [
     { id: "venue", label: "Venue & rentals", weight: 20, floor: 0, color: "#a5533d", description: "Space hire, furniture, linens, and cleaning." },
@@ -73,7 +73,7 @@ export const birthdayPack: DomainPack = {
   ],
   sample: {
     eventType: "birthday", title: "Rina’s 40th birthday", hostNames: "Rina & friends", weeksFromNow: 10,
-    guests: 55, budget: 6000, location: "Chicago, IL", costLevel: "average",
+    guests: 55, budget: 150000, location: "Mumbai, Maharashtra", costLevel: "average",
     priorities: ["food", "entertainment", "photo"], vibe: "dinner",
     notes: "A warm rooftop dinner with speeches, old photographs, and dancing after dessert.",
     constraints: ["Gluten-free options", "Quiet space for kids"],
