@@ -61,7 +61,7 @@ Status: **complete locally**. Deployment intentionally skipped per project owner
 - [x] 56 Vitest tests; 90% statement / 93% line coverage on `lib/`
 - [x] Coverage thresholds enforced (85% statements/lines/functions)
 - [x] API tests for 200/400/429 and safe fallback
-- [x] 5 Playwright journeys including persistence, wizard, assistant, axe
+- [x] 6 Playwright journeys including persistence, wizard, edit, assistant, axe
 - [x] GitHub Actions CI for lint, typecheck, coverage, build, and e2e
 
 ## M9 — Documentation + submission prep ✅ (deployment skipped)
