@@ -53,7 +53,7 @@ export function Landing() {
             One thoughtful brief becomes your budget, countdown, vendor checklist, and a plan full of ideas that actually feel like you.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
-            <Link href="/new" className="inline-flex min-h-14 items-center gap-3 rounded-full bg-clay px-7 text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(165,83,61,.2)] transition hover:-translate-y-0.5 hover:bg-clay-dark">Plan my event <ArrowRight size={18} aria-hidden="true" /></Link>
+            <Link href="/new" className="inline-flex min-h-14 items-center gap-3 rounded-full bg-clay px-7 text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(165,83,61,.2)] transition hover:-translate-y-0.5 hover:bg-clay-dark active:scale-[.98] active:translate-y-0">Plan my event <ArrowRight size={18} aria-hidden="true" /></Link>
             <Link href="/new?sample=wedding" className="inline-flex min-h-14 items-center gap-2 rounded-full px-4 text-sm font-semibold text-ink underline decoration-line underline-offset-8 transition hover:decoration-clay">See a sample wedding <ArrowUpRight size={16} aria-hidden="true" /></Link>
           </div>
           <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-xs font-medium text-muted" aria-label="Product benefits">

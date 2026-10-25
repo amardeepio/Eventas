@@ -5,9 +5,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Node](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![Tests](https://img.shields.io/badge/tests-149_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
+[![Tests](https://img.shields.io/badge/tests-150_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
 [![Coverage](https://img.shields.io/badge/coverage-87%25_statements_%7C_91%25_lines-brightgreen)](#testing)
-[![Playwright](https://img.shields.io/badge/Playwright-11_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
+[![Playwright](https://img.shields.io/badge/Playwright-14_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
 [![Accessibility](https://img.shields.io/badge/a11y-axe_WCAG_2.1_AA-4c1)](#accessibility)
 [![Local-first](https://img.shields.io/badge/data-local--first-9f4e39)](#how-data-is-saved)
 [![License](https://img.shields.io/badge/license-competition_entry-lightgrey)](#license)
@@ -331,6 +331,16 @@ GOOGLE_TRANSLATE_API_KEY=your_key_here   # server-only; never NEXT_PUBLIC_
 - Both assistants receive the selected language and answer in it directly; demo replies are translated server-side.
 - Without a key or after a quota error, the app simply stays in English. Nothing breaks.
 
+### Mobile
+
+Eventas is tuned for phones as well as the desktop studio:
+
+- **Safe areas and viewport.** `viewport-fit=cover` plus `env(safe-area-inset-*)` padding keeps fixed sheets, headers, and the copilot clear of notches and home indicators. Layouts use `dvh` so mobile browser chrome and the keyboard never clip them.
+- **Native-feeling motion.** The landing header collapses into a sheet that slides in with staggered links, dialogs slide and fade, buttons compress on press, and Android gets a short haptic tap when a sheet opens or a refresh starts.
+- **Pull to refresh.** A damped pull at the top of the landing page or studio shows a progress pill and reloads on release. It is suppressed inside dialogs, while scrolled, from form controls, and on the brief wizard so typed input is never lost.
+- **Installable.** `manifest.webmanifest` (standalone display, maskable icons), `appleWebApp` metadata, and a 180px touch icon let Android and iOS add Eventas to the home screen.
+- **Input ergonomics.** Form controls render at 16px on phones so iOS Safari does not zoom on focus, and `interactive-widget=resizes-content` keeps the chat composer above the Android keyboard.
+
 
 ### Scripts
 
@@ -358,7 +368,7 @@ GOOGLE_TRANSLATE_API_KEY=your_key_here   # server-only; never NEXT_PUBLIC_
 
 ## Testing
 
-**149 automated tests across 17 files**, with **87% statement / 91% line coverage** on `lib/` and enforced thresholds (85% statements/lines/functions, 70% branches).
+**150 automated tests across 17 files**, with **87% statement / 91% line coverage** on `lib/` and enforced thresholds (85% statements/lines/functions, 70% branches).
 
 | Layer | Coverage |
 | --- | --- |
@@ -371,7 +381,7 @@ GOOGLE_TRANSLATE_API_KEY=your_key_here   # server-only; never NEXT_PUBLIC_
 | API | 200 demo contracts, 400 malformed input, 429 abuse, guarded chatbot responses, safe fallback, wedding draft, vendor message, translation validation and graceful degradation |
 | Storage | Hydration, v1 migration, create/update/reset, persistence, enrichment merge, malformed responses |
 | Presentation | axe scan of landing, chart text alternatives |
-| Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions; Hindi switch persists across reload, translates plan content, and both assistants send the selected language |
+| Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions; Hindi switch persists across reload, translates plan content, and both assistants send the selected language; print-ready PDF export; phone header fits with an animated menu sheet; pull-to-refresh reloads on release |
 
 Playwright runs against a **production build** on port `3100` (`npm run build && npm run start -- --port 3100`). CI runs lint, typecheck, coverage, build, and browser tests on Node 22 with **no secrets**, so Demo mode is exercised too. The live Groq path is covered by route contracts and manual smoke tests; it always falls back to the deterministic draft.
 

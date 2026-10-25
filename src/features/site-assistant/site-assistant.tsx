@@ -86,17 +86,17 @@ export function SiteAssistant() {
     }
   }
 
-  return <Dialog.Root>
+  return <Dialog.Root onOpenChange={(next) => { if (next && "vibrate" in navigator) navigator.vibrate(8); }}>
     <Dialog.Trigger asChild>
-      <button data-testid="site-assistant-trigger" className="group fixed right-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-13 items-center gap-2.5 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(40,30,20,.28)] transition hover:-translate-y-0.5 hover:bg-clay-dark focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-clay sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]" aria-label={t("Ask about Eventas")}>
+      <button data-testid="site-assistant-trigger" className="group fixed right-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-13 items-center gap-2.5 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(40,30,20,.28)] transition hover:-translate-y-0.5 hover:bg-clay-dark active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-clay sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]" aria-label={t("Ask about Eventas")}>
         <span className="relative grid size-7 place-items-center rounded-full bg-white/10"><MessageCircle size={15} aria-hidden="true" /><span className="absolute -top-0.5 -right-0.5 size-2 animate-pulse rounded-full bg-[#dca68e] ring-2 ring-ink" /></span>
         <span className="hidden sm:inline">{t("Ask about Eventas")}</span>
         <span className="sm:hidden">{t("Ask")}</span>
       </button>
     </Dialog.Trigger>
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/20 backdrop-blur-[2px] data-[state=open]:animate-rise" />
-      <Dialog.Content className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 flex h-[min(78dvh,620px)] flex-col overflow-hidden rounded-[2rem] border border-line bg-bone shadow-[0_25px_90px_rgba(40,30,20,.24)] outline-none sm:inset-x-auto sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] sm:w-[420px]" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
+      <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/20 backdrop-blur-[2px] data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out" />
+      <Dialog.Content className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 flex h-[min(78dvh,620px)] flex-col overflow-hidden rounded-[2rem] border border-line bg-bone shadow-[0_25px_90px_rgba(40,30,20,.24)] outline-none data-[state=open]:animate-sheet-up data-[state=closed]:animate-sheet-down sm:inset-x-auto sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] sm:w-[420px]" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
         <div className="flex items-center gap-3 border-b border-line bg-paper/80 px-5 py-4">
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-ink text-white"><Sparkles size={17} aria-hidden="true" /></span>
           <div className="min-w-0 flex-1">
@@ -123,7 +123,7 @@ export function SiteAssistant() {
         </div>
 
         <div className="border-t border-line bg-paper p-4">
-          {messages.length < 3 && <div className="mb-3 flex flex-wrap gap-2" aria-label={t("Suggested questions")}>{quickPrompts.map((prompt) => <button key={prompt} onClick={() => send(t(prompt))} className="min-h-9 rounded-full border border-line bg-bone px-3 text-[11px] font-medium text-muted transition hover:border-clay hover:text-ink">{t(prompt)}</button>)}</div>}
+          {messages.length < 3 && <div className="mb-3 flex flex-wrap gap-2" aria-label={t("Suggested questions")}>{quickPrompts.map((prompt) => <button key={prompt} onClick={() => send(t(prompt))} className="min-h-9 rounded-full border border-line bg-bone px-3 text-[11px] font-medium text-muted transition hover:border-clay hover:text-ink active:scale-[.96]">{t(prompt)}</button>)}</div>}
           <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className="flex items-end gap-2 rounded-3xl border border-line bg-white p-2 focus-within:border-clay focus-within:ring-4 focus-within:ring-clay/10">
             <label htmlFor="site-assistant-input" className="sr-only">{t("Ask about Eventas")}</label>
             <textarea id="site-assistant-input" ref={inputRef} rows={1} value={input} onChange={(event) => setInput(event.target.value.slice(0, 2000))} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(input); } }} enterKeyHint="send" autoComplete="off" placeholder={t("Ask about Eventas…")} className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted/60" />
