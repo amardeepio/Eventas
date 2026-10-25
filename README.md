@@ -314,6 +314,32 @@ Check available models at [console.groq.com/docs/models](https://console.groq.co
 
 > Never commit `.env.local`. `.env.example` is the only committed template.
 
+### Deploy to Google Cloud Run
+
+The repo includes a multi-stage `Dockerfile` that builds the standalone Next.js server, runs as a non-root user, and listens on `$PORT`.
+
+```bash
+PROJECT=your-project-id
+REGION=asia-south1
+
+gcloud artifacts repositories create eventas \
+  --repository-format=docker --location="$REGION"
+
+gcloud builds submit \
+  --tag "$REGION-docker.pkg.dev/$PROJECT/eventas/app"
+
+gcloud run deploy eventas \
+  --image "$REGION-docker.pkg.dev/$PROJECT/eventas/app" \
+  --region "$REGION" --allow-unauthenticated \
+  --port 8080 --memory 1Gi --max-instances 1 \
+  --set-env-vars GROQ_MODEL=openai/gpt-oss-120b \
+  --set-secrets GROQ_API_KEY=GROQ_API_KEY:latest,GOOGLE_TRANSLATE_API_KEY=GOOGLE_TRANSLATE_API_KEY:latest
+```
+
+Put both keys in Secret Manager and grant the Cloud Run service account `roles/secretmanager.secretAccessor` on each; nothing sensitive enters the image or the build logs. Keep `--max-instances=1` because the assistant rate limiter and the daily translation budget are in memory and therefore per-instance — move both to Redis or Firestore before scaling out.
+
+Live: [eventas-301104363527.asia-south1.run.app](https://eventas-301104363527.asia-south1.run.app)
+
 ### Languages
 
 The interface and both chatbots support **English, Hindi, Bengali, Gujarati, Kannada, Tamil, and Marathi**. Choose a language from the landing header, the planning-studio header, or inside either assistant. The choice is saved in `localStorage` and reflected in the document's `lang` attribute.

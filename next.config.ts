@@ -29,6 +29,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
+  // A self-contained server bundle keeps the Cloud Run image small.
+  output: "standalone",
   turbopack: {
     rules: { "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" } },
   },
