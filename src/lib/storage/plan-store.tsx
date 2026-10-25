@@ -5,6 +5,7 @@ import type { Brief, Plan } from "../domain/types";
 import { buildPlan } from "../domain/engine/plan";
 import { aiPlanResponseSchema } from "../validation/schemas";
 import { parseStoredPlan } from "./migrate";
+import { useLanguage } from "../i18n/language-provider";
 
 const STORAGE_KEY = "eventas.plan.v2";
 const LEGACY_KEYS = ["eventas.plan.v1"];
@@ -21,6 +22,7 @@ interface PlanContextValue {
 const PlanContext = createContext<PlanContextValue | null>(null);
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
+  const { language } = useLanguage();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const planRef = useRef<Plan | null>(null);
@@ -75,7 +77,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const enrichWithAi = useCallback(async (source: Plan) => {
     try {
       const response = await fetch("/api/ai/plan", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: source }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: source, language }),
       });
       if (!response.ok) return;
       const data: unknown = await response.json();
@@ -92,7 +94,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         })),
       }));
     } catch { /* Baseline plan is intentionally complete without enrichment. */ }
-  }, [updatePlan]);
+  }, [updatePlan, language]);
 
   const value = useMemo(() => ({ plan, hydrated, createPlan, updatePlan, resetPlan, enrichWithAi }), [plan, hydrated, createPlan, updatePlan, resetPlan, enrichWithAi]);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;

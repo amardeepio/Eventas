@@ -1,6 +1,6 @@
 import { draftMessageRequestSchema, draftMessageResponseSchema } from "@/lib/validation/schemas";
 import { badRequest, checkAiRateLimit, readJson } from "@/lib/ai/http";
-import { AI_CONTEXT_RULES, draftMessagePrompt } from "@/lib/ai/prompts";
+import { AI_CONTEXT_RULES, draftMessagePrompt, languageInstruction } from "@/lib/ai/prompts";
 import { generateJson, hasGroqKey } from "@/lib/ai/groq";
 import { demoDraftMessageBody } from "@/lib/ai/demo";
 import { detectPromptInjection } from "@/lib/ai/injection";
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try {
     const input = draftMessageRequestSchema.safeParse(await readJson(request));
     if (!input.success) return badRequest();
-    const { plan, vendorId, intent } = input.data;
+    const { plan, vendorId, intent, language } = input.data;
     const vendor = plan.vendors.find((item) => item.id === vendorId);
     if (!vendor) return badRequest("Choose a vendor from this plan and try again.");
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     try {
       const result = await generateJson({
-        system: AI_CONTEXT_RULES,
+        system: `${AI_CONTEXT_RULES}${languageInstruction(language, { json: true })}`,
         user: draftMessagePrompt(plan, vendor, intent),
         schema: draftMessageResponseSchema,
         signal: request.signal,

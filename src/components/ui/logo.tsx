@@ -8,6 +8,6 @@ export function Logo({ className, href = "/" }: { className?: string; href?: str
       <path d="M8 19.5C11.5 19.5 12 10 16 10C20 10 20.5 22 24 22" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <circle cx="16" cy="10" r="2.2" fill="#A5533D" />
     </svg>
-    <span className="font-display text-[25px] font-semibold tracking-[-.03em]">eventas<span className="text-clay">.</span></span>
+    <span translate="no" className="font-display text-[25px] font-semibold tracking-[-.03em]">eventas<span className="text-clay">.</span></span>
   </Link>;
 }

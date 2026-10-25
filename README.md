@@ -5,9 +5,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Node](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![Tests](https://img.shields.io/badge/tests-123_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
-[![Coverage](https://img.shields.io/badge/coverage-90%25_statements_%7C_94%25_lines-brightgreen)](#testing)
-[![Playwright](https://img.shields.io/badge/Playwright-9_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
+[![Tests](https://img.shields.io/badge/tests-149_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
+[![Coverage](https://img.shields.io/badge/coverage-87%25_statements_%7C_91%25_lines-brightgreen)](#testing)
+[![Playwright](https://img.shields.io/badge/Playwright-11_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
 [![Accessibility](https://img.shields.io/badge/a11y-axe_WCAG_2.1_AA-4c1)](#accessibility)
 [![Local-first](https://img.shields.io/badge/data-local--first-9f4e39)](#how-data-is-saved)
 [![License](https://img.shields.io/badge/license-competition_entry-lightgrey)](#license)
@@ -314,6 +314,24 @@ Check available models at [console.groq.com/docs/models](https://console.groq.co
 
 > Never commit `.env.local`. `.env.example` is the only committed template.
 
+### Languages
+
+The interface and both chatbots support **English, Hindi, Bengali, Gujarati, Kannada, Tamil, and Marathi**. Choose a language from the landing header, the planning-studio header, or inside either assistant. The choice is saved in `localStorage` and reflected in the document's `lang` attribute.
+
+Translation runs entirely on the server through **Google Cloud Translation (v2)**:
+
+```bash
+GOOGLE_TRANSLATE_API_KEY=your_key_here   # server-only; never NEXT_PUBLIC_
+```
+
+- `POST /api/translate` validates and batches strings, applies its own rate limit, and caches results in memory. The browser keeps a `localStorage` cache, so a second visit in the same language makes **no API calls**.
+- A daily character budget (default 400,000, configurable with `TRANSLATE_DAILY_CHAR_LIMIT`) protects the Google free tier; once exhausted, the UI falls back to English for uncached strings.
+- The rendered page is translated in place, including generated plan content — budget categories, vendor questions, timeline tasks, and ideas — plus placeholders, titles, and `aria-label`s.
+- Brand text and chat messages are opted out with `translate="no"`, so the wordmark stays intact and streamed replies are never re-translated.
+- Both assistants receive the selected language and answer in it directly; demo replies are translated server-side.
+- Without a key or after a quota error, the app simply stays in English. Nothing breaks.
+
+
 ### Scripts
 
 | Script | Purpose |
@@ -340,7 +358,7 @@ Check available models at [console.groq.com/docs/models](https://console.groq.co
 
 ## Testing
 
-**123 automated tests across 13 files**, with **90% statement / 94% line coverage** on `lib/` and enforced thresholds (85% statements/lines/functions, 70% branches).
+**149 automated tests across 17 files**, with **87% statement / 91% line coverage** on `lib/` and enforced thresholds (85% statements/lines/functions, 70% branches).
 
 | Layer | Coverage |
 | --- | --- |
@@ -348,11 +366,12 @@ Check available models at [console.groq.com/docs/models](https://console.groq.co
 | Traditions & content | City tiers, destination detection, curated muhurat dates/windows, tradition profiles, muhurat applicability, constraint normalization |
 | Validation | Brief, plan v2, functions, muhurat, AI output, wedding-draft schema, assistant limits, unknown keys, corrupt persistence, v1→v2 migration |
 | AI | JSON parsing, schema rejection, provider errors, SSE stream transformation, cache TTL/LRU, rate-limit windows, rebalance safety, natural-language wedding draft parsing, vendor-message drafting |
+| Languages | Language catalogue and native labels, entity decoding, batching and per-language caching, untranslatable-string filtering, prompt language directives, document translation, opted-out nodes, attribute translation, late-mounted content, restore to English |
 | Injection | Role-change, prompt/secret extraction, delimiter attempts, zero-width evasion, ordinary-question false positives, guarded draft routes |
-| API | 200 demo contracts, 400 malformed input, 429 abuse, guarded chatbot responses, safe fallback, wedding draft, vendor message |
+| API | 200 demo contracts, 400 malformed input, 429 abuse, guarded chatbot responses, safe fallback, wedding draft, vendor message, translation validation and graceful degradation |
 | Storage | Hydration, v1 migration, create/update/reset, persistence, enrichment merge, malformed responses |
 | Presentation | axe scan of landing, chart text alternatives |
-| Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions |
+| Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions; Hindi switch persists across reload, translates plan content, and both assistants send the selected language |
 
 Playwright runs against a **production build** on port `3100` (`npm run build && npm run start -- --port 3100`). CI runs lint, typecheck, coverage, build, and browser tests on Node 22 with **no secrets**, so Demo mode is exercised too. The live Groq path is covered by route contracts and manual smoke tests; it always falls back to the deterministic draft.
 

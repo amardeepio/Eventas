@@ -1,6 +1,6 @@
 import { weddingDraftRequestSchema, weddingDraftSchema } from "@/lib/validation/schemas";
 import { badRequest, checkAiRateLimit, readJson } from "@/lib/ai/http";
-import { AI_CONTEXT_RULES, weddingDraftPrompt } from "@/lib/ai/prompts";
+import { AI_CONTEXT_RULES, languageInstruction, weddingDraftPrompt } from "@/lib/ai/prompts";
 import { generateJson, hasGroqKey } from "@/lib/ai/groq";
 import { demoWeddingDraft } from "@/lib/ai/demo";
 import { normalizeWeddingDraft } from "@/lib/ai/wedding-draft";
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const input = weddingDraftRequestSchema.safeParse(await readJson(request));
     if (!input.success) return badRequest();
-    const { message, current } = input.data;
+    const { message, current, language } = input.data;
 
     if (hasPromptInjection([{ role: "user", content: message }])) {
       const response = badRequest(SAFE_REFUSAL);
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     try {
       const draft = await generateJson({
-        system: AI_CONTEXT_RULES,
+        system: `${AI_CONTEXT_RULES}${languageInstruction(language, { json: true })}`,
         user: weddingDraftPrompt(message, current),
         schema: weddingDraftSchema,
         signal: request.signal,

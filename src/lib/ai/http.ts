@@ -1,4 +1,4 @@
-import { aiRateLimiter, dailyAiLimiter } from "@/lib/utils/rate-limit";
+import { aiRateLimiter, dailyAiLimiter, translateDailyLimiter, translateRateLimiter } from "@/lib/utils/rate-limit";
 
 export function getRequestKey(request: Request): string {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
@@ -12,6 +12,17 @@ export function checkAiRateLimit(request: Request): Response | null {
   if (result.allowed && daily.allowed) return null;
   return Response.json(
     { error: "The planning assistant is taking a short breather. Please try again in a minute." },
+    { status: 429, headers: { "Retry-After": String(Math.max(result.retryAfter, daily.retryAfter)) } },
+  );
+}
+
+export function checkTranslateRateLimit(request: Request): Response | null {
+  const ip = getRequestKey(request);
+  const result = translateRateLimiter.check(ip);
+  const daily = translateDailyLimiter.check("global");
+  if (result.allowed && daily.allowed) return null;
+  return Response.json(
+    { error: "Translation is taking a short breather. Please try again in a minute.", mode: "unavailable" },
     { status: 429, headers: { "Retry-After": String(Math.max(result.retryAfter, daily.retryAfter)) } },
   );
 }

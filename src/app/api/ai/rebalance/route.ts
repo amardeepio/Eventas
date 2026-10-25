@@ -1,6 +1,6 @@
 import { rebalanceRequestSchema, rebalanceResponseSchema } from "@/lib/validation/schemas";
 import { badRequest, checkAiRateLimit, readJson } from "@/lib/ai/http";
-import { AI_CONTEXT_RULES, rebalancePrompt } from "@/lib/ai/prompts";
+import { AI_CONTEXT_RULES, languageInstruction, rebalancePrompt } from "@/lib/ai/prompts";
 import { generateJson, hasGroqKey } from "@/lib/ai/groq";
 import { isSafeAllocation, proposeRebalance } from "@/lib/ai/rebalance";
 import { detectPromptInjection } from "@/lib/ai/injection";
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const input = rebalanceRequestSchema.safeParse(await readJson(request));
     if (!input.success) return badRequest();
-    const { plan, goal } = input.data;
+    const { plan, goal, language } = input.data;
     if (detectPromptInjection(goal)) {
       return Response.json(
         { ...proposeRebalance(plan, "save 5%"), mode: "demo" },
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     if (hasGroqKey()) {
       try {
         const result = await generateJson({
-          system: AI_CONTEXT_RULES,
+          system: `${AI_CONTEXT_RULES}${languageInstruction(language, { json: true })}`,
           user: rebalancePrompt(plan, goal),
           schema: rebalanceResponseSchema,
           signal: request.signal,

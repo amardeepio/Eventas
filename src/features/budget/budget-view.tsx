@@ -6,6 +6,7 @@ import { Card, Eyebrow, Badge } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { usePlan } from "@/lib/storage/plan-store";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import { getBudgetTotals } from "@/lib/domain/engine/budget";
 import { formatMoney, formatDate } from "@/lib/utils/format";
 import { rebalanceResponseSchema } from "@/lib/validation/schemas";
@@ -17,6 +18,7 @@ interface Proposal { rationale: string; allocation: Record<string, number>; mode
 
 export function BudgetView() {
   const { plan, updatePlan } = usePlan();
+  const { language } = useLanguage();
   const [showRebalance, setShowRebalance] = useState(false);
   const [goal, setGoal] = useState("Save 5% without affecting our top priorities");
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,7 @@ export function BudgetView() {
     if (!plan || goal.trim().length < 2) return;
     setLoading(true); setProposal(null); setStatus("");
     try {
-      const response = await fetch("/api/ai/rebalance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, goal }) });
+      const response = await fetch("/api/ai/rebalance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, goal, language }) });
       if (!response.ok) throw new Error("Request failed");
       const data: unknown = await response.json();
       const result = rebalanceResponseSchema.safeParse(data);

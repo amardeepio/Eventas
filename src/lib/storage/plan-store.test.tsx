@@ -1,11 +1,12 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlanProvider, usePlan } from "./plan-store";
+import { LanguageProvider } from "../i18n/language-provider";
 import { getSampleBrief } from "../domain/packs";
 import { buildPlan } from "../domain/engine/plan";
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <PlanProvider>{children}</PlanProvider>;
+  return <LanguageProvider><PlanProvider>{children}</PlanProvider></LanguageProvider>;
 }
 
 describe("local plan store", () => {

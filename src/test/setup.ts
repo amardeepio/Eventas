@@ -6,6 +6,8 @@ import { cleanup } from "@testing-library/react";
 afterEach(() => cleanup());
 delete process.env.GROQ_API_KEY;
 process.env.GROQ_API_KEY = "";
+delete process.env.GOOGLE_TRANSLATE_API_KEY;
+process.env.GOOGLE_TRANSLATE_API_KEY = "";
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,

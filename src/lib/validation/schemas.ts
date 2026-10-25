@@ -1,5 +1,13 @@
 import { z } from "zod";
 import { EVENT_TYPES, FUNCTION_KINDS, TRADITIONS } from "../domain/types";
+import { LANGUAGE_CODES } from "../i18n/languages";
+
+export const languageSchema = z.enum(LANGUAGE_CODES).default("en");
+
+export const translateRequestSchema = z.object({
+  target: z.enum(LANGUAGE_CODES),
+  texts: z.array(z.string().min(1).max(1000)).min(1).max(60),
+}).strict();
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date");
 const clock = z.string().regex(/^$|^\d{2}:\d{2}$/, "Use a valid time");
@@ -102,12 +110,13 @@ const chatMessagesSchema = z.array(z.object({
   content: z.string().trim().min(1).max(2000),
 })).min(1).max(20);
 
-export const assistantRequestSchema = z.object({ plan: planSchema, messages: chatMessagesSchema });
-export const siteAssistantRequestSchema = z.object({ messages: chatMessagesSchema });
-export const aiPlanRequestSchema = z.object({ plan: planSchema });
+export const assistantRequestSchema = z.object({ plan: planSchema, messages: chatMessagesSchema, language: languageSchema });
+export const siteAssistantRequestSchema = z.object({ messages: chatMessagesSchema, language: languageSchema });
+export const aiPlanRequestSchema = z.object({ plan: planSchema, language: languageSchema });
 export const rebalanceRequestSchema = z.object({
   plan: planSchema,
   goal: z.string().trim().min(2).max(500),
+  language: languageSchema,
 });
 
 const nullableText = (max: number) => z.string().trim().max(max).nullish().transform((value) => value ?? undefined);
@@ -155,12 +164,14 @@ export const weddingDraftSchema = z.object({
 export const weddingDraftRequestSchema = z.object({
   message: z.string().trim().min(2).max(2000),
   current: briefSchema.partial().optional(),
+  language: languageSchema,
 });
 
 export const draftMessageRequestSchema = z.object({
   plan: planSchema,
   vendorId: z.string().trim().min(1).max(50),
   intent: z.string().trim().max(300).optional(),
+  language: languageSchema,
 });
 
 export const draftMessageResponseSchema = z.object({

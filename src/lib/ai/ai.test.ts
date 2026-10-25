@@ -5,8 +5,8 @@ import { proposeRebalance, isSafeAllocation } from "./rebalance";
 import { demoAssistantReply } from "./demo";
 import { buildPlan } from "../domain/engine/plan";
 import { getSampleBrief } from "../domain/packs";
-import { AI_CONTEXT_RULES, assistantSystemPrompt, compactPlanContext, planGenerationPrompt, rebalancePrompt, wrapPriorReply, wrapUserMessage } from "./prompts";
-import { demoSiteReply, sitePrompt } from "./site-prompt";
+import { AI_CONTEXT_RULES, assistantSystemPrompt, compactPlanContext, languageInstruction, planGenerationPrompt, rebalancePrompt, wrapPriorReply, wrapUserMessage } from "./prompts";
+import { demoSiteReply, sitePrompt, siteSystemPrompt } from "./site-prompt";
 import { formatMoney } from "../utils/format";
 
 const plan = buildPlan(getSampleBrief("wedding", new Date("2026-10-24T00:00:00Z")));
@@ -89,6 +89,31 @@ describe("prompt boundaries", () => {
     expect(planGenerationPrompt(plan)).toContain("INR");
     expect(rebalancePrompt(plan, "save 5%")).toContain("INR");
     expect(assistantSystemPrompt(plan)).toContain("under 180 words");
+  });
+});
+
+describe("multilingual prompts", () => {
+  it("leaves English prompts untouched", () => {
+    expect(languageInstruction("en")).toBe("");
+    expect(languageInstruction(undefined)).toBe("");
+    expect(assistantSystemPrompt(plan)).not.toContain("Reply only in");
+  });
+
+  it("names the native script for each Indian language", () => {
+    expect(languageInstruction("hi")).toContain("हिन्दी");
+    expect(languageInstruction("bn")).toContain("বাংলা");
+    expect(languageInstruction("gu")).toContain("ગુજરાતી");
+    expect(languageInstruction("kn")).toContain("ಕನ್ನಡ");
+    expect(languageInstruction("ta")).toContain("தமிழ்");
+    expect(languageInstruction("mr")).toContain("मराठी");
+    expect(assistantSystemPrompt(plan, "ta")).toContain("தமிழ்");
+    expect(siteSystemPrompt("mr")).toContain("मराठी");
+  });
+
+  it("protects JSON keys when generating structured content", () => {
+    const instruction = languageInstruction("gu", { json: true });
+    expect(instruction).toContain("JSON key");
+    expect(instruction).toContain("ગુજરાતી");
   });
 });
 

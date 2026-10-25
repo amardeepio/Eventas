@@ -7,10 +7,11 @@ import { BudgetDonut } from "@/features/budget/budget-donut";
 import { allocateBudget } from "@/lib/domain/engine/budget";
 import { getPack, getSampleBrief } from "@/lib/domain/packs";
 import { PlanProvider } from "@/lib/storage/plan-store";
+import { LanguageProvider } from "@/lib/i18n/language-provider";
 
 describe("core presentation", () => {
   it("renders the landing page without critical axe violations", async () => {
-    const { container } = render(<PlanProvider><Landing /></PlanProvider>);
+    const { container } = render(<LanguageProvider><PlanProvider><Landing /></PlanProvider></LanguageProvider>);
     const results = await axe(container);
     expect(results.violations).toEqual([]);
   });

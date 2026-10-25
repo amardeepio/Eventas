@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui/logo";
 import { Eyebrow } from "@/components/ui/card";
 import { SavedPlanLink } from "./saved-plan-link";
 import { SiteAssistant } from "@/features/site-assistant/site-assistant";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { getPack, getSampleBrief, packList } from "@/lib/domain/packs";
 import { allocateBudget } from "@/lib/domain/engine/budget";
 import { daysUntil, formatMoney } from "@/lib/utils/format";
@@ -28,6 +29,7 @@ export function Landing() {
       <Logo />
       <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-5">
         <a href="#how-it-works" className="hidden min-h-11 items-center px-2 text-sm font-medium text-muted transition hover:text-ink sm:flex">How it works</a>
+        <LanguageSwitcher label="Language" className="shrink-0" />
         <SavedPlanLink />
         <Link href="/new" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white transition hover:bg-clay-dark sm:px-5">Start planning <ArrowRight size={15} aria-hidden="true" /></Link>
       </nav>

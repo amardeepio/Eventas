@@ -40,7 +40,7 @@ export function Overview({ onNavigate, onOpenAssistant }: OverviewProps) {
           <div className="mt-8 flex flex-wrap items-end gap-x-10 gap-y-5">
             <div><div className="flex items-baseline gap-2"><strong className="font-display text-6xl leading-none font-normal">{days > 0 ? days : 0}</strong><span className="text-sm text-white/55">days</span></div><p className="mt-2 text-xs text-white/50">until {formatDate(plan.brief.date, { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}</p></div>
             <div className="h-12 w-px bg-white/15" />
-            <div><p className="flex items-center gap-2 text-sm text-white/70"><Users size={15} aria-hidden="true" />{plan.brief.guests} {pack.terminology.guest}s</p><p className="mt-2 text-xs text-white/50">{plan.brief.location}</p></div>
+            <div><p className="flex items-center gap-2 text-sm text-white/70"><Users size={15} aria-hidden="true" />{`${plan.brief.guests} ${pack.terminology.guest}s`}</p><p className="mt-2 text-xs text-white/50">{plan.brief.location}</p></div>
           </div>
           {(nextFunction || plan.muhurat) && <div className="mt-6 space-y-1 border-t border-white/10 pt-4 text-xs text-white/55">
             {nextFunction && <p>Next: <span className="font-semibold text-white/80">{nextFunction.name}</span> · {formatDate(nextFunction.date)}</p>}

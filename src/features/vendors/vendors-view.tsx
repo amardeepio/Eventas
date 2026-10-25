@@ -6,6 +6,7 @@ import { Card, Badge, Eyebrow } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/field";
 import { usePlan } from "@/lib/storage/plan-store";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import { formatMoney } from "@/lib/utils/format";
 import type { Vendor, VendorStatus } from "@/lib/domain/types";
 import { cn } from "@/lib/utils/cn";
@@ -14,6 +15,7 @@ const statusLabels: Record<VendorStatus, string> = { idea: "Ideas", shortlisted:
 
 export function VendorsView() {
   const { plan, updatePlan } = usePlan();
+  const { language } = useLanguage();
   const [copied, setCopied] = useState("");
   const [draftFor, setDraftFor] = useState<string | null>(null);
   const [draftBody, setDraftBody] = useState("");
@@ -38,7 +40,7 @@ export function VendorsView() {
       const response = await fetch("/api/ai/draft-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, vendorId: vendor.id }),
+        body: JSON.stringify({ plan, vendorId: vendor.id, language }),
       });
       const data = await response.json() as { body?: unknown; mode?: string; error?: string };
       if (!response.ok) throw new Error(data.error ?? "We could not draft that just now.");

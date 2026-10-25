@@ -4,7 +4,16 @@ import { assistantSystemPrompt, wrapUserMessage } from "@/lib/ai/prompts";
 import { hasGroqKey, openAssistantStream } from "@/lib/ai/groq";
 import { demoAssistantReply } from "@/lib/ai/demo";
 import { hasPromptInjection, SAFE_REFUSAL } from "@/lib/ai/injection";
+import { translateTexts } from "@/lib/translate/server";
+import type { LanguageCode } from "@/lib/i18n/languages";
 
+const PLAIN_TEXT = { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" };
+
+async function localize(text: string, language: LanguageCode): Promise<string> {
+  if (language === "en") return text;
+  const [translated] = await translateTexts([text], language);
+  return translated ?? text;
+}
 
 export async function POST(request: Request) {
   const limited = checkAiRateLimit(request);
@@ -12,20 +21,21 @@ export async function POST(request: Request) {
   try {
     const input = assistantRequestSchema.safeParse(await readJson(request));
     if (!input.success) return badRequest();
-    const { plan, messages } = input.data;
+    const { plan, messages, language } = input.data;
     if (hasPromptInjection(messages)) {
-      return new Response(SAFE_REFUSAL, {
-        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Eventas-Guard": "blocked" },
+      return new Response(await localize(SAFE_REFUSAL, language), {
+        headers: { ...PLAIN_TEXT, "X-Eventas-Guard": "blocked" },
       });
     }
-    const fallback = () => new Response(demoAssistantReply(plan, messages.at(-1)?.content ?? ""), {
-      headers: { "Content-Type": "text/plain; charset=utf-8", "X-Eventas-Mode": "demo", "Cache-Control": "no-store" },
-    });
+    const fallback = async () => new Response(
+      await localize(demoAssistantReply(plan, messages.at(-1)?.content ?? ""), language),
+      { headers: { ...PLAIN_TEXT, "X-Eventas-Mode": "demo" } },
+    );
     if (!hasGroqKey()) return fallback();
     try {
       const signal = AbortSignal.any([request.signal, AbortSignal.timeout(60_000)]);
       const response = await openAssistantStream([
-        { role: "system", content: assistantSystemPrompt(plan) },
+        { role: "system", content: assistantSystemPrompt(plan, language) },
         ...messages.slice(-12).map((message) => message.role === "user"
           ? { ...message, content: wrapUserMessage(message.content) }
           : message),

@@ -7,6 +7,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/card";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { usePlan } from "@/lib/storage/plan-store";
 import { getPack } from "@/lib/domain/packs";
 import { daysUntil, formatDate } from "@/lib/utils/format";
@@ -50,16 +51,17 @@ export function Dashboard() {
       <Logo className="mb-8 px-2" />
       <div className="mb-6 rounded-2xl bg-ink p-4 text-white"><p className="text-[9px] font-bold tracking-[.17em] text-white/50 uppercase">{pack.label} plan</p><p className="mt-2 truncate font-display text-xl">{plan.brief.title}</p><p className="mt-1 text-[11px] text-white/55">{formatDate(plan.brief.date, { month: "long", day: "numeric", timeZone: "UTC" })} · {plan.brief.guests} guests</p></div>
       {nav()}
-      <div className="mt-auto space-y-2 pt-6"><Button className="w-full" onClick={() => setAssistantOpen(true)}><Bot size={17} aria-hidden="true" /> Ask Eventas</Button><Link href="/new?edit=1" className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Pencil size={13} /> Edit brief</Link><Link href="/new" onClick={(event) => { if (!window.confirm("Start a new plan? Your current plan will be replaced. Export it first if you want to keep a copy.")) event.preventDefault(); }} className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Plus size={13} /> New event plan</Link></div>
+      <div className="mt-auto space-y-2 pt-6"><Button data-testid="open-assistant" className="w-full" onClick={() => setAssistantOpen(true)}><Bot size={17} aria-hidden="true" /> Ask Eventas</Button><Link href="/new?edit=1" className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Pencil size={13} /> Edit brief</Link><Link href="/new" onClick={(event) => { if (!window.confirm("Start a new plan? Your current plan will be replaced. Export it first if you want to keep a copy.")) event.preventDefault(); }} className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Plus size={13} /> New event plan</Link></div>
     </aside>
 
     <div className="lg:pl-[248px]">
       <header className="sticky top-0 z-20 border-b border-line/70 bg-bone/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-7 lg:px-10">
-          <Dialog.Root open={navOpen} onOpenChange={setNavOpen}><Dialog.Trigger asChild><Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation"><Menu size={20} /></Button></Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-sm lg:hidden" /><Dialog.Content className="fixed inset-y-0 left-0 z-50 w-[290px] bg-paper p-5 shadow-2xl outline-none lg:hidden"><div className="mb-8 flex items-center justify-between"><Dialog.Title className="sr-only">Plan navigation</Dialog.Title><Logo /><Dialog.Close asChild><Button variant="ghost" size="icon" aria-label="Close navigation"><X size={19} /></Button></Dialog.Close></div>{nav(true)}</Dialog.Content></Dialog.Portal></Dialog.Root>
+          <Dialog.Root open={navOpen} onOpenChange={setNavOpen}><Dialog.Trigger asChild><Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation"><Menu size={20} /></Button></Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-sm lg:hidden" /><Dialog.Content className="fixed inset-y-0 left-0 z-50 w-[290px] bg-paper p-5 shadow-2xl outline-none lg:hidden"><div className="mb-8 flex items-center justify-between"><Dialog.Title className="sr-only">Plan navigation</Dialog.Title><Logo /><Dialog.Close asChild><Button variant="ghost" size="icon" aria-label="Close navigation"><X size={19} /></Button></Dialog.Close></div>{nav(true)}<div className="mt-6"><LanguageSwitcher label="Language" className="w-full justify-between" /></div></Dialog.Content></Dialog.Portal></Dialog.Root>
           <div className="min-w-0 flex-1"><h1 className="truncate font-display text-xl font-medium sm:text-2xl"><span className="sm:hidden">{visibleViews.find((item) => item.id === view)?.label}</span><span className="hidden sm:inline">{titles[view]}</span></h1></div>
           <Badge className="hidden border-sage/20 bg-[#e8ede6] text-sage sm:inline-flex"><span className="size-1.5 rounded-full bg-sage" />{days > 0 ? `${days} days to go` : "Event day"}</Badge>
           <Link href="/new?edit=1" className="hidden min-h-10 items-center gap-2 rounded-full px-3 text-xs font-semibold text-muted hover:bg-soft hover:text-ink md:inline-flex"><Pencil size={14} aria-hidden="true" /> Edit brief</Link>
+          <LanguageSwitcher label="Language" className="hidden shrink-0 md:inline-flex" />
           <Button variant="ghost" size="icon" onClick={() => downloadPlan(plan)} aria-label="Export plan as Markdown" title="Export plan"><Download size={18} /></Button>
           <Button size="sm" className="lg:hidden" onClick={() => setAssistantOpen(true)} aria-label="Ask Eventas"><Bot size={17} /></Button>
         </div>

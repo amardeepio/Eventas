@@ -1,6 +1,6 @@
 import { aiPlanRequestSchema, aiPlanResponseSchema } from "@/lib/validation/schemas";
 import { badRequest, checkAiRateLimit, readJson } from "@/lib/ai/http";
-import { AI_CONTEXT_RULES, planGenerationPrompt } from "@/lib/ai/prompts";
+import { AI_CONTEXT_RULES, languageInstruction, planGenerationPrompt } from "@/lib/ai/prompts";
 import { generateJson, hasGroqKey } from "@/lib/ai/groq";
 import { demoPlanEnrichment } from "@/lib/ai/demo";
 import { TtlCache } from "@/lib/ai/cache";
@@ -13,14 +13,14 @@ export async function POST(request: Request) {
   try {
     const input = aiPlanRequestSchema.safeParse(await readJson(request));
     if (!input.success) return badRequest();
-    const { plan } = input.data;
-    const cacheKey = JSON.stringify({ brief: plan.brief, ideas: plan.ideas.map((idea) => idea.id) });
+    const { plan, language } = input.data;
+    const cacheKey = JSON.stringify({ language, brief: plan.brief, ideas: plan.ideas.map((idea) => idea.id) });
     const cached = cache.get(cacheKey);
     if (cached) return Response.json({ ...cached, mode: hasGroqKey() ? "live" : "demo" });
     if (!hasGroqKey()) return Response.json({ ...demoPlanEnrichment(plan), mode: "demo" });
     try {
       const result = await generateJson({
-        system: AI_CONTEXT_RULES,
+        system: `${AI_CONTEXT_RULES}${languageInstruction(language, { json: true })}`,
         user: planGenerationPrompt(plan),
         schema: aiPlanResponseSchema,
         signal: request.signal,

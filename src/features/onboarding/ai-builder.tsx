@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge, Card, Eyebrow } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/field";
 import { briefSchema } from "@/lib/validation/schemas";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import { getTradition } from "@/lib/domain/traditions";
 import type { Brief } from "@/lib/domain/types";
 import { formatDate, formatMoney } from "@/lib/utils/format";
@@ -25,6 +26,7 @@ const examples = [
 ];
 
 export function AiBuilder({ onApply }: { onApply: (brief: Brief) => void }) {
+  const { language } = useLanguage();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,7 +42,7 @@ export function AiBuilder({ onApply }: { onApply: (brief: Brief) => void }) {
       const response = await fetch("/api/ai/wedding-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, language }),
       });
       const data = await response.json() as { brief?: unknown; assumptions?: unknown; questions?: unknown; mode?: string; error?: string };
       if (!response.ok) throw new Error(data.error ?? "We could not draft that just now. Try a shorter description.");
