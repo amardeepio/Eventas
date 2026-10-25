@@ -70,7 +70,7 @@ Budget changes are never applied silently. The **Rebalance with AI** flow return
 A floating **Ask about Eventas** button answers questions about the product without requiring a plan: how budgeting works, the three event types, AI use, and exactly how data is stored. It is rate-limited and protected by the same prompt-injection tripwire as the planning assistant.
 
 ### 5. Local-first and instant
-No account, database, or onboarding email. The active plan and draft live in `localStorage`, are schema-validated on read, and can be exported as Markdown with functions, muhurat, budget, timeline, vendor notes, and saved ideas.
+No account, database, or onboarding email. The active plan and draft live in `localStorage`, are schema-validated on read, and can be exported as a print-ready PDF with functions, muhurat, budget, timeline, vendor notes, and saved ideas.
 
 ### How data is saved
 
@@ -421,10 +421,10 @@ Playwright runs against a **production build** on port `3100` (`npm run build &&
 
 - Add a guest list with per-function RSVP, plus-ones, dietary needs, travel, and seating.
 - Add deposits, installments, payment due dates, and a cash-flow reminder view.
-- Add a printable PDF run sheet, `.ics` calendar export, and a dedicated print layout.
+- Add `.ics` calendar export and a guest-facing run sheet.
 - Add multiple saved plans/archive and optional encrypted cloud sync.
 - Add a shared rate-limit store for multi-instance deployments.
-- Add Hindi/Hinglish and regional-language copy; the current interface is English with Indian wedding vocabulary.
+- Add Hinglish copy and a reviewed glossary for regional-language planning terms.
 - Expand city-level price benchmarks once a trustworthy, licensable data source is available.
 - Add optional BYO-key mode for judges who want live AI without a deployment secret.
 

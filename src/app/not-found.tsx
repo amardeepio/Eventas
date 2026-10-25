@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 
 export default function NotFound() {
-  return <main id="main-content" className="grid min-h-screen place-items-center px-6 text-center">
+  return <main id="main-content" className="grid min-h-dvh place-items-center px-6 text-center">
     <div className="max-w-lg">
       <Logo className="mb-12" />
       <p className="font-display text-7xl text-clay/40">404</p>

@@ -181,10 +181,10 @@ export function OnboardingWizard() {
     router.push("/plan");
   }
 
-  if (creating) return <main id="main-content" className="grid min-h-screen place-content-center px-6 text-center"><LoaderCircle className="mx-auto animate-spin text-clay" size={30} aria-hidden="true" /><h1 className="mt-5 font-display text-4xl">Composing your plan…</h1><p className="mt-3 text-sm text-muted">Balancing the budget and putting every milestone in place.</p></main>;
+  if (creating) return <main id="main-content" className="grid min-h-dvh place-content-center px-6 text-center"><LoaderCircle className="mx-auto animate-spin text-clay" size={30} aria-hidden="true" /><h1 className="mt-5 font-display text-4xl">Composing your plan…</h1><p className="mt-3 text-sm text-muted">Balancing the budget and putting every milestone in place.</p></main>;
 
-  return <div className="min-h-screen">
-    <header className="mx-auto flex max-w-[1500px] items-center justify-between px-5 py-5 sm:px-8"><Logo /><Link href="/" className="inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-ink">Save & exit</Link></header>
+  return <div className="min-h-dvh">
+    <header className="mx-auto flex max-w-[1500px] items-center justify-between px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 sm:px-8"><Logo /><Link href="/" className="inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-ink">Save & exit</Link></header>
     <div className="mx-auto grid max-w-[1500px] gap-10 px-5 pb-16 sm:px-8 lg:grid-cols-[1fr_390px] lg:px-12">
       <main id="main-content" className="mx-auto w-full max-w-[760px] lg:mx-0">
         <nav aria-label="Planning progress" className="mb-10">

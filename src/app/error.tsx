@@ -6,7 +6,7 @@ import { Logo } from "@/components/ui/logo";
 
 export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const router = useRouter();
-  return <main id="main-content" className="grid min-h-screen place-items-center px-6 text-center">
+  return <main id="main-content" className="grid min-h-dvh place-items-center px-6 text-center">
     <div className="max-w-lg">
       <Logo className="mb-12" />
       <p className="text-[11px] font-bold tracking-[.18em] text-clay uppercase">A small detour</p>

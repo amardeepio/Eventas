@@ -114,3 +114,19 @@ test("the landing page is responsive and visually complete", async ({ page }) =>
   await expect(page.getByRole("link", { name: "Plan my event" })).toBeVisible();
   await page.screenshot({ path: "test-results/landing-mobile.png", fullPage: true });
 });
+
+test("the plan opens a print-ready PDF document", async ({ page }) => {
+  await page.goto("/new?sample=wedding");
+  await expect(page).toHaveURL(/\/plan/, { timeout: 20_000 });
+
+  const popupPromise = page.waitForEvent("popup");
+  await page.getByRole("button", { name: "Download plan as PDF" }).click();
+  const popup = await popupPromise;
+
+  await expect(popup).toHaveURL(/\/plan\/print/);
+  await expect(popup.getByRole("button", { name: "Save as PDF" })).toBeVisible();
+  await expect(popup.getByRole("heading", { name: "Budget" })).toBeVisible();
+  await expect(popup.getByRole("heading", { name: "Timeline" })).toBeVisible();
+  await expect(popup.getByRole("heading", { name: "Maya & Dev’s wedding" })).toBeVisible();
+  await expect.poll(() => popup.title()).toContain("Eventas plan");
+});

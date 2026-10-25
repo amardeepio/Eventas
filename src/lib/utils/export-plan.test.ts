@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { planToMarkdown } from "./export-plan";
+import { describe, expect, it, vi } from "vitest";
+import { downloadPlan, planToMarkdown } from "./export-plan";
 import { buildPlan } from "../domain/engine/plan";
 import { getSampleBrief } from "../domain/packs";
 import { formatDate, formatMoney, daysUntil, clamp } from "./format";
@@ -31,6 +31,19 @@ describe("plan export", () => {
     expect(markdown).toContain("Call the venue manager.");
     expect(markdown).toContain("quoted");
     expect(markdown).not.toContain("No saved ideas yet.");
+  });
+
+  it("opens the print-ready view for PDF export", () => {
+    let href = "";
+    let target = "";
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      href = this.href;
+      target = this.target;
+    });
+    downloadPlan();
+    expect(href).toContain("/plan/print?auto=1");
+    expect(target).toBe("_blank");
+    click.mockRestore();
   });
 });
 

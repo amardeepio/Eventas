@@ -13,6 +13,16 @@ export const metadata: Metadata = {
   description: "Turn a 60-second brief into a smart budget, timeline, vendor checklist, and personalized ideas for weddings, birthdays, and community events.",
   applicationName: "Eventas",
   keywords: ["event planning", "AI wedding planner", "birthday planner", "community events"],
+  manifest: "/manifest.webmanifest",
+  formatDetection: { telephone: false, email: false, address: false },
+  appleWebApp: { capable: true, title: "Eventas", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-icon-180.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: "Eventas — Make room for the moment",
     description: "A smart budget, realistic timeline, vendor checklist, and personalized ideas from one thoughtful brief.",
@@ -22,7 +32,16 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Eventas — Make room for the moment", description: "AI-powered event planning with logic behind the numbers." },
 };
 
-export const viewport: Viewport = { themeColor: "#f7f4ee", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f7f4ee",
+  colorScheme: "light",
+  // Android Chrome resizes the layout viewport when the keyboard opens, which
+  // keeps the chat composer above the keyboard instead of hidden behind it.
+  interactiveWidget: "resizes-content",
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${fraunces.variable}`}>

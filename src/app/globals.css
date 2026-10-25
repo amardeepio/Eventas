@@ -19,9 +19,14 @@
 
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body {
   margin: 0;
+  min-height: 100dvh;
   background:
     radial-gradient(ellipse at 12% -10%, rgba(197, 139, 104, .13), transparent 35rem),
     radial-gradient(ellipse at 100% 30%, rgba(93, 113, 97, .07), transparent 32rem),
@@ -29,10 +34,22 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 ::selection { background: #e6c9b9; color: var(--color-ink); }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, a, [role="button"], summary { touch-action: manipulation; }
+button { user-select: none; -webkit-user-select: none; }
 button:focus-visible, a:focus-visible { outline: 2px solid var(--color-clay); outline-offset: 3px; }
+
+/*
+ * iOS Safari zooms the page when a form control with a font-size below 16px
+ * receives focus. Keep controls at 16px on phones and preserve the design on
+ * larger screens.
+ */
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px; }
+}
 
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes breathe { 0%,100% { transform: scale(1); opacity: .65; } 50% { transform: scale(1.08); opacity: 1; } }
@@ -49,14 +66,21 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--color-clay); ou
 .typing-dot { animation: typing 1.2s infinite; }
 .typing-dot:nth-child(2) { animation-delay: .15s; }
 .typing-dot:nth-child(3) { animation-delay: .3s; }
-.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--color-line) transparent; }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--color-line) transparent; overscroll-behavior: contain; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 @media print {
+  @page { size: A4; margin: 14mm 13mm 16mm; }
+  html, body { background: #fff !important; }
   aside, nav, .no-print, button { display: none !important; }
-  body { background: white; }
   main { padding: 0 !important; max-width: none !important; }
   section, article { break-inside: avoid; }
+  .print-page { background: #fff !important; }
+  .print-break-before { break-before: page; }
+  .print-break-inside-avoid { break-inside: avoid; }
+  .print-color { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .grain::after { display: none !important; }
+  a[href]::after { content: none !important; }
 }
