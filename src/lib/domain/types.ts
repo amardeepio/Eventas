@@ -1,9 +1,71 @@
 export const EVENT_TYPES = ["wedding", "birthday", "community"] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
+export const TRADITIONS = [
+  "north-hindu",
+  "punjabi-sikh",
+  "gujarati",
+  "rajasthani",
+  "south-indian",
+  "bengali",
+  "marathi",
+  "muslim",
+  "christian",
+  "interfaith",
+  "other",
+  "none",
+] as const;
+export type Tradition = (typeof TRADITIONS)[number];
+
+export const FUNCTION_KINDS = [
+  "roka",
+  "engagement",
+  "haldi",
+  "mehndi",
+  "sangeet",
+  "baraat",
+  "ceremony",
+  "reception",
+  "vidaai",
+  "griha-pravesh",
+  "custom",
+] as const;
+export type FunctionKind = (typeof FUNCTION_KINDS)[number];
+
 export type CostLevel = "low" | "average" | "high";
 export type TaskStatus = "todo" | "doing" | "done";
 export type VendorStatus = "idea" | "shortlisted" | "contacted" | "booked";
+export type FunctionStatus = "planned" | "booked" | "done";
+export type HostSide = "bride" | "groom" | "both";
+export type BudgetScaling = "linear" | "sublinear" | "fixed";
+
+/** A function as the host describes it in the brief. */
+export interface FunctionDraft {
+  kind: FunctionKind;
+  name: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  guestCount: number;
+  dressCode: string;
+  hostSide: HostSide;
+}
+
+/** A function as it exists inside a built plan. */
+export interface WeddingFunction extends FunctionDraft {
+  id: string;
+  budget: number;
+  status: FunctionStatus;
+}
+
+export interface MuhuratWindow {
+  date: string;
+  start: string;
+  end: string;
+  label: string;
+  source: string;
+}
 
 export interface Brief {
   eventType: EventType;
@@ -18,6 +80,9 @@ export interface Brief {
   vibe: string;
   notes: string;
   constraints: string[];
+  tradition: Tradition;
+  functions: FunctionDraft[];
+  muhurat?: MuhuratWindow;
 }
 
 export interface BudgetCategory {
@@ -29,6 +94,7 @@ export interface BudgetCategory {
   color: string;
   description: string;
   perGuest: boolean;
+  scaling: BudgetScaling;
 }
 
 export interface Task {
@@ -40,6 +106,7 @@ export interface Task {
   owner: string;
   status: TaskStatus;
   priority: "high" | "normal";
+  functionId?: string;
 }
 
 export interface Vendor {
@@ -70,10 +137,12 @@ export interface AiEnrichment {
 }
 
 export interface Plan {
-  version: 1;
+  version: 2;
   id: string;
   createdAt: string;
   brief: Brief;
+  functions: WeddingFunction[];
+  muhurat: MuhuratWindow | null;
   budget: BudgetCategory[];
   timeline: Task[];
   vendors: Vendor[];
@@ -89,12 +158,19 @@ export interface BudgetWeight {
   color: string;
   description: string;
   perGuest?: boolean;
+  scaling?: BudgetScaling;
 }
 
 export interface PhaseTemplate {
   name: string;
   weeksBefore: number;
-  tasks: Array<{ title: string; description: string; priority?: "high" | "normal" }>;
+  tasks: Array<{
+    title: string;
+    description: string;
+    priority?: "high" | "normal";
+    functionKind?: FunctionKind;
+    owner?: string;
+  }>;
 }
 
 export interface VendorTemplate {
@@ -115,11 +191,24 @@ export interface DomainPack {
   defaultGuests: number;
   defaultBudget: number;
   horizonMonths: number;
+  defaultTradition: Tradition;
   budget: BudgetWeight[];
   timeline: PhaseTemplate[];
   vendors: VendorTemplate[];
   priorities: Array<{ id: string; label: string }>;
   vibes: Array<{ id: string; label: string; description: string }>;
   ideas: Array<Omit<Idea, "id" | "cost" | "saved">>;
-  sample: Omit<Brief, "date"> & { weeksFromNow: number };
+  sample: Omit<Brief, "date" | "functions" | "muhurat"> & { weeksFromNow: number; functionKinds?: FunctionKind[] };
+}
+
+export interface TraditionProfile {
+  id: Tradition;
+  label: string;
+  shortLabel: string;
+  description: string;
+  ceremonyLabel: string;
+  ritualLead: string;
+  functions: FunctionKind[];
+  foodDefaults: string[];
+  notes: string[];
 }

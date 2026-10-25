@@ -10,15 +10,16 @@ export const communityPack: DomainPack = {
   defaultGuests: 300,
   defaultBudget: 500000,
   horizonMonths: 6,
+  defaultTradition: "none",
   budget: [
     { id: "venue", label: "Venue & site", weight: 18, floor: 5, color: "#a5533d", description: "Site rental, shelters, fencing, toilets, and cleaning." },
-    { id: "catering", label: "Food & water", weight: 20, floor: 8, color: "#c77b57", perGuest: true, description: "Food vendors, drinking water, volunteer meals, and service." },
+    { id: "catering", label: "Food & water", weight: 20, floor: 8, color: "#c77b57", scaling: "linear", perGuest: true, description: "Food vendors, drinking water, volunteer meals, and service." },
     { id: "programming", label: "Programming", weight: 16, floor: 5, color: "#5d7161", description: "Performers, speakers, workshops, and activities." },
     { id: "marketing", label: "Outreach", weight: 10, floor: 2, color: "#9b7c8d", description: "Print, translation, community partners, and digital promotion." },
     { id: "av", label: "AV & power", weight: 12, floor: 4, color: "#728b9b", description: "Stage, sound, lighting, generators, and technicians." },
-    { id: "permits", label: "Permits & safety", weight: 8, floor: 3, color: "#807a70", perGuest: true, description: "Permits, insurance, security, first aid, and accessibility." },
+    { id: "permits", label: "Permits & safety", weight: 8, floor: 3, color: "#807a70", scaling: "linear", perGuest: true, description: "Permits, insurance, security, first aid, and accessibility." },
     { id: "decor", label: "Wayfinding & decor", weight: 5, floor: 1, color: "#b49358", description: "Signage, maps, banners, and gathering spaces." },
-    { id: "supplies", label: "Supplies", weight: 4, floor: 1, color: "#b59d91", perGuest: true, description: "Wristbands, radios, volunteer kits, and consumables." },
+    { id: "supplies", label: "Supplies", weight: 4, floor: 1, color: "#b59d91", scaling: "linear", perGuest: true, description: "Wristbands, radios, volunteer kits, and consumables." },
     { id: "contingency", label: "Contingency", weight: 7, floor: 5, color: "#ded7cd", description: "Weather response, attendance changes, and emergency needs." },
   ],
   priorities: [
@@ -80,6 +81,7 @@ export const communityPack: DomainPack = {
   sample: {
     eventType: "community", title: "Indiranagar Spring Festival", hostNames: "Indiranagar Residents’ Association", weeksFromNow: 22,
     guests: 350, budget: 500000, location: "Bengaluru, Karnataka", costLevel: "average",
+    tradition: "none",
     priorities: ["programming", "permits", "catering"], vibe: "festival",
     notes: "A free neighborhood festival with local performers, food stalls, family activities, and a quiet zone.",
     constraints: ["Step-free routes", "Multilingual signage", "Quiet sensory space"],

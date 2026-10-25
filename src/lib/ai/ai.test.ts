@@ -7,6 +7,7 @@ import { buildPlan } from "../domain/engine/plan";
 import { getSampleBrief } from "../domain/packs";
 import { AI_CONTEXT_RULES, assistantSystemPrompt, compactPlanContext, planGenerationPrompt, rebalancePrompt, wrapPriorReply, wrapUserMessage } from "./prompts";
 import { demoSiteReply, sitePrompt } from "./site-prompt";
+import { formatMoney } from "../utils/format";
 
 const plan = buildPlan(getSampleBrief("wedding", new Date("2026-10-24T00:00:00Z")));
 
@@ -53,9 +54,23 @@ describe("rebalance safety", () => {
 
 describe("demo assistant", () => {
   it("answers budget and vendor questions with plan-specific facts", () => {
-    expect(demoAssistantReply(plan, "Where am I overspending?")).toContain("₹25,00,000");
+    expect(demoAssistantReply(plan, "Where am I overspending?")).toContain(formatMoney(plan.brief.budget));
     expect(demoAssistantReply(plan, "Which vendor should I book?")).toContain("vendor");
     expect(demoAssistantReply(plan, "hello")).toContain("next three moves");
+  });
+
+  it("answers the new audit, run sheet, muhurat, and tradition prompts", () => {
+    expect(demoAssistantReply(plan, "What am I forgetting?")).toMatch(/check next|muhurat/i);
+    expect(demoAssistantReply(plan, "Build a day-of run sheet")).toMatch(/run sheet|Mehndi/i);
+    expect(demoAssistantReply(plan, "Help with the muhurat")).toMatch(/muhurat/i);
+    expect(demoAssistantReply(plan, "Tell me about my tradition")).toContain("North Indian Hindu");
+    expect(demoAssistantReply(plan, "Give me an idea")).toContain("Given your");
+  });
+
+  it("uses a saved muhurat and refuses to invent one", () => {
+    const withMuhurat = buildPlan({ ...getSampleBrief("wedding"), muhurat: { date: "2026-11-21", start: "06:48", end: "23:59", label: "Vivah", source: "Test" } });
+    expect(demoAssistantReply(withMuhurat, "What is my muhurat?")).toContain("21 Nov 2026");
+    expect(demoAssistantReply(plan, "What is my muhurat?")).toMatch(/never invent/i);
   });
 });
 

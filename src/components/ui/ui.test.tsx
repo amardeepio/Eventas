@@ -24,6 +24,6 @@ describe("core presentation", () => {
     const pack = getPack("wedding");
     const categories = allocateBudget(pack, getSampleBrief("wedding", new Date("2026-10-24")));
     const { getByRole } = render(<BudgetDonut categories={categories} total={categories.reduce((sum, item) => sum + item.planned, 0)} />);
-    expect(getByRole("img").getAttribute("aria-label")).toContain("Food & drinks");
+    expect(getByRole("img").getAttribute("aria-label")).toContain("Catering & food");
   });
 });

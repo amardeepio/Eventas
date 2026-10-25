@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlanProvider, usePlan } from "./plan-store";
 import { getSampleBrief } from "../domain/packs";
+import { buildPlan } from "../domain/engine/plan";
 
 function wrapper({ children }: { children: React.ReactNode }) {
   return <PlanProvider>{children}</PlanProvider>;
@@ -19,7 +20,7 @@ describe("local plan store", () => {
 
     act(() => { result.current.createPlan(getSampleBrief("wedding")); });
     expect(result.current.plan?.brief.eventType).toBe("wedding");
-    await waitFor(() => expect(localStorage.getItem("eventas.plan.v1")).toContain("Maya"));
+    await waitFor(() => expect(localStorage.getItem("eventas.plan.v2")).toContain("Maya"));
 
     act(() => {
       result.current.updatePlan((current) => ({ ...current, brief: { ...current.brief, guests: 80 } }));
@@ -28,7 +29,27 @@ describe("local plan store", () => {
 
     act(() => { result.current.resetPlan(); });
     expect(result.current.plan).toBeNull();
-    await waitFor(() => expect(localStorage.getItem("eventas.plan.v1")).toBeNull());
+    await waitFor(() => expect(localStorage.getItem("eventas.plan.v2")).toBeNull());
+  });
+
+  it("migrates a v1 plan without losing its brief or budget", async () => {
+    const legacyPlan = buildPlan(getSampleBrief("wedding"));
+    const legacy = {
+      ...legacyPlan,
+      version: 1,
+      brief: { ...legacyPlan.brief, tradition: undefined, functions: undefined, muhurat: undefined },
+      functions: undefined,
+      muhurat: undefined,
+      budget: legacyPlan.budget.map((item) => { const { scaling, ...rest } = item; void scaling; return rest; }),
+    };
+    localStorage.setItem("eventas.plan.v1", JSON.stringify(legacy));
+    const { result } = renderHook(() => usePlan(), { wrapper });
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.plan?.version).toBe(2);
+    expect(result.current.plan?.brief.title).toBe(legacyPlan.brief.title);
+    expect(result.current.plan?.functions.length).toBeGreaterThan(0);
+    expect(result.current.plan?.budget.every((item) => Boolean(item.scaling))).toBe(true);
+    expect(localStorage.getItem("eventas.plan.v1")).toBeNull();
   });
 
   it("enriches a plan and ignores malformed model responses", async () => {

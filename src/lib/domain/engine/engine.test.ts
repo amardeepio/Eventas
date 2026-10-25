@@ -62,9 +62,9 @@ describe("budget decisions", () => {
 
   it("moves money toward selected priorities", () => {
     const base = allocateBudget(wedding, { ...brief, priorities: ["photo"], costLevel: "average" });
-    const focused = allocateBudget(wedding, { ...brief, priorities: ["rings"], costLevel: "average" });
-    expect(focused.find((item) => item.id === "rings")?.planned ?? 0)
-      .toBeGreaterThan(base.find((item) => item.id === "rings")?.planned ?? 0);
+    const focused = allocateBudget(wedding, { ...brief, priorities: ["jewelry"], costLevel: "average" });
+    expect(focused.find((item) => item.id === "jewelry")?.planned ?? 0)
+      .toBeGreaterThan(base.find((item) => item.id === "jewelry")?.planned ?? 0);
   });
 
   it("scales per-guest categories with larger guest counts", () => {

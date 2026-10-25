@@ -10,5 +10,5 @@ export function Eyebrow({ className, ...props }: HTMLAttributes<HTMLParagraphEle
 }
 
 export function Badge({ className, ...props }: HTMLAttributes<HTMLSpanElement>) {
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border border-line bg-soft px-2.5 py-1 text-[11px] font-semibold text-muted", className)} {...props} />;
+  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border border-line bg-soft px-2.5 py-1 text-[11px] font-semibold text-ink/70", className)} {...props} />;
 }

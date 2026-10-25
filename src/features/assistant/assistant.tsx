@@ -10,7 +10,7 @@ import { usePlan } from "@/lib/storage/plan-store";
 import { cn } from "@/lib/utils/cn";
 
 interface Message { role: "user" | "assistant"; content: string }
-const quickPrompts = ["What should I do this month?", "Where am I overspending?", "Help me prioritize vendors"];
+const quickPrompts = ["What should I do this month?", "Where am I overspending?", "What am I forgetting?", "Build a day-of run sheet", "Help me prioritize vendors"];
 
 export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { plan } = usePlan();

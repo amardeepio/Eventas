@@ -3,9 +3,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Brief, Plan } from "../domain/types";
 import { buildPlan } from "../domain/engine/plan";
-import { aiPlanResponseSchema, planSchema } from "../validation/schemas";
+import { aiPlanResponseSchema } from "../validation/schemas";
+import { parseStoredPlan } from "./migrate";
 
-const STORAGE_KEY = "eventas.plan.v1";
+const STORAGE_KEY = "eventas.plan.v2";
+const LEGACY_KEYS = ["eventas.plan.v1"];
 
 interface PlanContextValue {
   plan: Plan | null;
@@ -28,11 +30,22 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const result = planSchema.safeParse(JSON.parse(stored));
+        const parsed = parseStoredPlan(JSON.parse(stored));
         // Hydration from an external store necessarily happens after SSR.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (result.success) setPlan(result.data);
+        if (parsed) setPlan(parsed);
         else localStorage.removeItem(STORAGE_KEY);
+      } else {
+        for (const key of LEGACY_KEYS) {
+          const legacy = localStorage.getItem(key);
+          if (!legacy) continue;
+          const parsed = parseStoredPlan(JSON.parse(legacy));
+          if (parsed) {
+            setPlan(parsed);
+          }
+          localStorage.removeItem(key);
+          break;
+        }
       }
     } catch { localStorage.removeItem(STORAGE_KEY); }
      

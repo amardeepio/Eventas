@@ -10,15 +10,16 @@ export const birthdayPack: DomainPack = {
   defaultGuests: 50,
   defaultBudget: 150000,
   horizonMonths: 3,
+  defaultTradition: "none",
   budget: [
     { id: "venue", label: "Venue & rentals", weight: 20, floor: 0, color: "#a5533d", description: "Space hire, furniture, linens, and cleaning." },
-    { id: "food", label: "Food & drinks", weight: 26, floor: 10, color: "#c77b57", perGuest: true, description: "Catering or restaurant minimum, staff, and beverages." },
-    { id: "cake", label: "Cake", weight: 8, floor: 2, color: "#c28c9c", perGuest: true, description: "Cake, candles, cutting, and delivery." },
+    { id: "food", label: "Food & drinks", weight: 26, floor: 10, color: "#c77b57", scaling: "linear", perGuest: true, description: "Catering or restaurant minimum, staff, and beverages." },
+    { id: "cake", label: "Cake", weight: 8, floor: 2, color: "#c28c9c", scaling: "linear", perGuest: true, description: "Cake, candles, cutting, and delivery." },
     { id: "entertainment", label: "Entertainment", weight: 14, floor: 3, color: "#5d7161", description: "DJ, performer, activity host, or games." },
     { id: "decor", label: "Decor", weight: 12, floor: 2, color: "#b49358", description: "Balloons, florals, lighting, and a photo backdrop." },
     { id: "photo", label: "Photography", weight: 6, floor: 0, color: "#84957f", description: "A photographer or content creator for the key hours." },
-    { id: "invitations", label: "Invitations", weight: 3, floor: 0, color: "#9b7c8d", perGuest: true, description: "Digital or printed invitations and reminders." },
-    { id: "favors", label: "Favors", weight: 4, floor: 0, color: "#b59d91", perGuest: true, description: "Small take-home gifts or activity supplies." },
+    { id: "invitations", label: "Invitations", weight: 3, floor: 0, color: "#9b7c8d", scaling: "linear", perGuest: true, description: "Digital or printed invitations and reminders." },
+    { id: "favors", label: "Favors", weight: 4, floor: 0, color: "#b59d91", scaling: "linear", perGuest: true, description: "Small take-home gifts or activity supplies." },
     { id: "contingency", label: "Contingency", weight: 7, floor: 5, color: "#ded7cd", description: "Weather, extra guests, transport, and last-minute supplies." },
   ],
   priorities: [
@@ -74,6 +75,7 @@ export const birthdayPack: DomainPack = {
   sample: {
     eventType: "birthday", title: "Rina’s 40th birthday", hostNames: "Rina & friends", weeksFromNow: 10,
     guests: 55, budget: 150000, location: "Mumbai, Maharashtra", costLevel: "average",
+    tradition: "none",
     priorities: ["food", "entertainment", "photo"], vibe: "dinner",
     notes: "A warm rooftop dinner with speeches, old photographs, and dancing after dessert.",
     constraints: ["Gluten-free options", "Quiet space for kids"],

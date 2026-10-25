@@ -10,12 +10,31 @@ test("a sample wedding becomes an editable, persistent plan", async ({ page }) =
 
   await page.getByRole("button", { name: "Budget", exact: true }).first().click();
   await expect(page.getByRole("heading", { name: "Every rupee has a job." })).toBeVisible();
-  const food = page.getByLabel("Food & drinks planned amount");
+  const food = page.getByLabel("Catering & food planned amount");
   await food.fill("500000");
   await page.waitForTimeout(500);
   await page.reload();
   await page.getByRole("button", { name: "Budget", exact: true }).first().click();
-  await expect(page.getByLabel("Food & drinks planned amount")).toHaveValue("500000");
+  await expect(page.getByLabel("Catering & food planned amount")).toHaveValue("500000");
+});
+
+test("a wedding plan exposes multi-day functions and a muhurat", async ({ page }) => {
+  await page.goto("/new?sample=wedding");
+  await expect(page).toHaveURL(/\/plan/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Functions", exact: true }).first().click();
+  await expect(page.getByRole("heading", { name: "Functions", exact: true })).toBeVisible();
+  await expect(page.getByText("Mehndi", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Reception", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/of ₹40,00,000 targeted/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Add muhurat" }).click();
+  await page.getByLabel("Label").fill("Vivah muhurat");
+  await expect(page.getByText("Vivah muhurat")).toBeVisible();
+  await page.getByLabel("Start", { exact: true }).fill("06:48");
+  await page.getByLabel("End", { exact: true }).fill("23:59");
+  await page.reload();
+  await page.getByRole("button", { name: "Functions", exact: true }).first().click();
+  await expect(page.getByText("Vivah muhurat")).toBeVisible();
 });
 
 test("the assistant answers with the plan context", async ({ page }) => {

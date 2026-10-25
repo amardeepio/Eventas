@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aiPlanResponseSchema, assistantRequestSchema, briefSchema, planSchema } from "./schemas";
+import { aiPlanResponseSchema, assistantRequestSchema, briefSchema, planSchema, weddingDraftSchema } from "./schemas";
 import { getSampleBrief } from "../domain/packs";
 import { buildPlan } from "../domain/engine/plan";
 
@@ -24,7 +24,7 @@ describe("brief validation", () => {
   it("round-trips a complete plan through persistence validation", () => {
     const plan = buildPlan(getSampleBrief("birthday"));
     expect(planSchema.safeParse(plan).success).toBe(true);
-    expect(planSchema.safeParse({ ...plan, version: 2 }).success).toBe(false);
+    expect(planSchema.safeParse({ ...plan, version: 3 }).success).toBe(false);
   });
 
   it("caps assistant history", () => {
@@ -32,5 +32,27 @@ describe("brief validation", () => {
     const tooMany = Array.from({ length: 21 }, (_, index) => ({ role: "user" as const, content: `Question ${index}` }));
     expect(assistantRequestSchema.safeParse({ plan, messages: tooMany }).success).toBe(false);
     expect(assistantRequestSchema.safeParse({ plan, messages: [{ role: "system", content: "hi" }] }).success).toBe(false);
+  });
+
+  it("accepts multi-day functions and a muhurat in a v2 plan", () => {
+    const plan = buildPlan(getSampleBrief("wedding"));
+    expect(plan.version).toBe(2);
+    expect(plan.functions.length).toBeGreaterThan(1);
+    expect(plan.brief.functions).toHaveLength(plan.functions.length);
+    expect(plan.brief.tradition).toBe("north-hindu");
+  });
+
+  it("rejects unknown keys and invalid function kinds in a wedding draft", () => {
+    const base = {
+      tradition: "north-hindu",
+      date: "2026-11-21",
+      guests: 300,
+      budget: 4_000_000,
+      location: "Udaipur, Rajasthan",
+      functions: [],
+    };
+    expect(weddingDraftSchema.safeParse(base).success).toBe(true);
+    expect(weddingDraftSchema.safeParse({ ...base, extra: true }).success).toBe(false);
+    expect(weddingDraftSchema.safeParse({ ...base, functions: [{ kind: "brunch" }] }).success).toBe(false);
   });
 });

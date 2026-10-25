@@ -9,17 +9,23 @@ import { Card, Eyebrow } from "@/components/ui/card";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { CityCombobox } from "@/components/ui/city-combobox";
 import { Logo } from "@/components/ui/logo";
-import { EVENT_TYPES, type Brief, type EventType } from "@/lib/domain/types";
+import { EVENT_TYPES, type Brief, type EventType, type FunctionDraft, type FunctionKind } from "@/lib/domain/types";
 import { getPack, getSampleBrief } from "@/lib/domain/packs";
+import { defaultFunctionDrafts, functionKindLabel, functionKindMeta } from "@/lib/domain/functions";
+import { TRADITION_OPTIONS } from "@/lib/domain/traditions";
+import { CONSTRAINT_OPTIONS } from "@/lib/domain/constraints";
 import { allocateBudget } from "@/lib/domain/engine/budget";
+import { cityTierLabel, inferCostLevel } from "@/lib/domain/city-tiers";
+import { findMuhuratSuggestion, MUHURAT_CAVEAT } from "@/lib/domain/muhurat";
 import { briefSchema } from "@/lib/validation/schemas";
 import { usePlan } from "@/lib/storage/plan-store";
 import { addDays, daysUntil, formatDate, formatMoney, toISODate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
+import { AiBuilder } from "./ai-builder";
 
 const steps = ["Event", "Basics", "Budget", "Priorities", "Personality"];
 const icons = { wedding: Heart, birthday: PartyPopper, community: Users } as const;
-const constraintOptions = ["Vegetarian options", "Gluten-free options", "Step-free access", "Multilingual signage", "Quiet sensory space", "Child-friendly", "Outdoor / weather plan", "Alcohol-free"];
+const functionChoices: FunctionKind[] = ["haldi", "mehndi", "sangeet", "baraat", "ceremony", "reception", "vidaai"];
 
 function initialBrief(type: EventType = "wedding"): Brief {
   const pack = getPack(type);
@@ -29,6 +35,8 @@ function initialBrief(type: EventType = "wedding"): Brief {
     guests: pack.defaultGuests, budget: pack.defaultBudget, location: "New Delhi, Delhi", costLevel: "average",
     priorities: pack.priorities.slice(0, 3).map((priority) => priority.id), vibe: pack.vibes[0]?.id ?? "modern",
     notes: "", constraints: [],
+    tradition: type === "wedding" ? pack.defaultTradition : "none",
+    functions: [],
   };
 }
 
@@ -100,7 +108,49 @@ export function OnboardingWizard() {
   function chooseType(type: EventType) {
     interactedRef.current = true;
     const next = getPack(type);
-    setBrief((current) => ({ ...current, eventType: type, guests: next.defaultGuests, budget: next.defaultBudget, priorities: next.priorities.slice(0, 3).map((item) => item.id), vibe: next.vibes[0]?.id ?? "", title: type === "wedding" ? "Our wedding" : `Our ${next.label.toLowerCase()}` }));
+    setBrief((current) => ({ ...current, eventType: type, guests: next.defaultGuests, budget: next.defaultBudget, priorities: next.priorities.slice(0, 3).map((item) => item.id), vibe: next.vibes[0]?.id ?? "", title: type === "wedding" ? "Our wedding" : `Our ${next.label.toLowerCase()}`, tradition: type === "wedding" ? next.defaultTradition : "none", functions: [] }));
+  }
+
+  const selectedFunctions = brief.eventType === "wedding"
+    ? (brief.functions.length ? brief.functions : defaultFunctionDrafts(brief))
+    : [];
+
+  function toggleFunction(kind: FunctionKind) {
+    const current = brief.functions.length ? brief.functions : defaultFunctionDrafts(brief);
+    const exists = current.some((item) => item.kind === kind);
+    if (exists) {
+      const next = current.filter((item) => item.kind !== kind);
+      update("functions", next.length ? next : current.filter((item) => item.kind === kind));
+      return;
+    }
+    const draft = defaultFunctionDrafts(brief).find((item) => item.kind === kind) ?? makeFunction(kind);
+    update("functions", [...current, draft]);
+  }
+
+  function makeFunction(kind: FunctionKind): FunctionDraft {
+    const meta = functionKindMeta(kind);
+    return {
+      kind,
+      name: functionKindLabel(kind),
+      date: brief.date,
+      startTime: meta.start,
+      endTime: meta.end,
+      venue: brief.location,
+      guestCount: brief.guests,
+      dressCode: meta.dress,
+      hostSide: "both",
+    };
+  }
+
+  function updateFunction(kind: FunctionKind, patch: Partial<FunctionDraft>) {
+    const current = brief.functions.length ? brief.functions : defaultFunctionDrafts(brief);
+    update("functions", current.map((item) => item.kind === kind ? { ...item, ...patch } : item));
+  }
+
+  function updateMuhurat(patch: Partial<NonNullable<Brief["muhurat"]>>) {
+    const current = brief.muhurat;
+    if (!current) return;
+    update("muhurat", { ...current, ...patch });
   }
 
   function validate(targetStep: number): boolean {
@@ -151,6 +201,8 @@ export function OnboardingWizard() {
           {step === 0 && <>
             <Eyebrow>Let’s begin with the occasion</Eyebrow><h1 id="step-title" className="mt-3 font-display text-5xl font-medium tracking-[-.04em]">What are we bringing to life?</h1><p className="mt-4 text-[15px] leading-7 text-muted">Choose one. Every recommendation, checklist, and deadline will adapt.</p>
             <fieldset className="mt-9"><legend className="sr-only">Event type</legend><div className="grid gap-4 sm:grid-cols-3">{EVENT_TYPES.map((type) => { const item = getPack(type); const Icon = icons[type]; const selected = brief.eventType === type; return <label key={type} className={cn("relative flex min-h-52 cursor-pointer flex-col rounded-3xl border bg-paper p-5 transition hover:-translate-y-1", selected ? "border-clay ring-4 ring-clay/10" : "border-line")}><input type="radio" name="eventType" value={type} checked={selected} onChange={() => chooseType(type)} className="sr-only" /><span className={cn("grid size-11 place-items-center rounded-2xl", selected ? "bg-clay text-white" : "bg-blush text-clay")}><Icon size={21} aria-hidden="true" /></span><span className="mt-auto pt-8 font-display text-2xl font-medium">{item.label}</span><span className="mt-2 text-xs leading-5 text-muted">{item.description}</span>{selected && <span className="absolute top-5 right-5 grid size-5 place-items-center rounded-full bg-clay text-white"><Check size={12} aria-hidden="true" /></span>}</label>; })}</div></fieldset>
+            {brief.eventType === "wedding" && <div className="mt-6"><AiBuilder onApply={(next) => { interactedRef.current = true; setBrief(next); setStep(1); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></div>}
+            {brief.eventType === "wedding" && <fieldset className="mt-6 rounded-2xl border border-line bg-paper/60 p-4"><legend className="px-2 text-sm font-semibold">Tradition & region</legend><p className="text-xs leading-5 text-muted">This changes the typical functions, ritual lead, food defaults, and vendor checklist. You can override every part.</p><div className="mt-3 flex flex-wrap gap-2">{TRADITION_OPTIONS.map((tradition) => { const selected = brief.tradition === tradition.id; return <button key={tradition.id} type="button" onClick={() => { update("tradition", tradition.id); update("functions", []); }} aria-pressed={selected} className={cn("min-h-10 rounded-full border px-3.5 text-xs font-medium transition", selected ? "border-sage bg-[#e8ede6] text-sage" : "border-line bg-paper text-muted hover:border-clay")}>{selected && <Check className="mr-1 inline" size={12} aria-hidden="true" />}{tradition.label}</button>; })}</div></fieldset>}
           </>}
 
           {step === 1 && <>
@@ -162,12 +214,45 @@ export function OnboardingWizard() {
               <Field label="Expected guests" htmlFor="guests" error={errors.guests}><Input id="guests" type="number" min={1} max={100000} value={brief.guests} onChange={(e) => update("guests", Number(e.target.value))} aria-invalid={Boolean(errors.guests)} /></Field>
             </div>
             <div className="mt-7 flex items-center gap-3 rounded-2xl bg-soft/70 p-4 text-sm text-muted"><CalendarDays size={19} className="shrink-0 text-clay" aria-hidden="true" /><span>That gives us <strong className="text-ink">{days} days</strong> to build a calm, realistic path to {formatDate(brief.date)}.</span></div>
+            {brief.eventType === "wedding" && <>
+              <fieldset className="mt-8">
+                <legend className="text-sm font-semibold">Functions you are hosting</legend>
+                <p className="mt-1 text-xs leading-5 text-muted">Dates start from the wedding date and can be edited later in the Functions view.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {functionChoices.map((kind) => {
+                    const selected = selectedFunctions.some((item) => item.kind === kind);
+                    return <button key={kind} type="button" aria-pressed={selected} onClick={() => toggleFunction(kind)} className={cn("min-h-10 rounded-full border px-3.5 text-xs font-medium transition", selected ? "border-sage bg-[#e8ede6] text-sage" : "border-line bg-paper text-muted hover:border-clay")}>{selected && <Check className="mr-1 inline" size={12} aria-hidden="true" />}{functionKindLabel(kind)}</button>;
+                  })}
+                </div>
+              </fieldset>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {selectedFunctions.map((item) => <div key={item.kind} className="rounded-2xl border border-line bg-paper p-4">
+                  <div className="flex items-center justify-between gap-3"><span className="text-sm font-semibold">{item.name}</span><span className="text-[10px] font-bold tracking-wider text-muted uppercase">{functionKindLabel(item.kind)}</span></div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Field label="Date" htmlFor={`fn-${item.kind}-date`}><Input id={`fn-${item.kind}-date`} type="date" value={item.date} onChange={(event) => { if (event.target.value) updateFunction(item.kind, { date: event.target.value }); }} aria-label={`${item.name} date`} /></Field>
+                    <Field label="Guests" htmlFor={`fn-${item.kind}-guests`}><Input id={`fn-${item.kind}-guests`} type="number" min={1} max={100000} value={item.guestCount} onChange={(event) => updateFunction(item.kind, { guestCount: Math.max(1, Number(event.target.value) || 1) })} aria-label={`${item.name} guests`} /></Field>
+                  </div>
+                </div>)}
+              </div>
+              <fieldset className="mt-6 rounded-2xl border border-line bg-paper/60 p-4">
+                <legend className="px-2 text-sm font-semibold">Muhurat (optional)</legend>
+                <p className="text-xs leading-5 text-muted">Add the window from your pandit. We never invent auspicious dates.</p>
+                {brief.muhurat ? <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <Field label="Date" htmlFor="muhurat-date"><Input id="muhurat-date" type="date" value={brief.muhurat.date} onChange={(event) => { const date = event.target.value; if (!date) return; const suggestion = findMuhuratSuggestion(date); updateMuhurat({ date, label: suggestion?.label ?? brief.muhurat?.label ?? "Muhurat", source: suggestion?.source ?? brief.muhurat?.source ?? "Entered by you", start: brief.muhurat?.start || suggestion?.start || "", end: brief.muhurat?.end || suggestion?.end || "" }); }} /></Field>
+                  <Field label="Start" htmlFor="muhurat-start"><Input id="muhurat-start" type="time" value={brief.muhurat.start} onChange={(event) => updateMuhurat({ start: event.target.value })} /></Field>
+                  <Field label="End" htmlFor="muhurat-end"><Input id="muhurat-end" type="time" value={brief.muhurat.end} onChange={(event) => updateMuhurat({ end: event.target.value })} /></Field>
+                  <div className="sm:col-span-3"><Button variant="ghost" size="sm" onClick={() => update("muhurat", undefined)}>Remove muhurat</Button></div>
+                </div> : <Button variant="secondary" size="sm" className="mt-3" onClick={() => update("muhurat", { date: brief.date, start: "", end: "", label: "Muhurat", source: "Entered by you" })}><CalendarDays size={14} aria-hidden="true" /> Add muhurat window</Button>}
+                <p className="mt-3 text-[11px] leading-5 text-muted">{MUHURAT_CAVEAT}</p>
+              </fieldset>
+            </>}
           </>}
 
           {step === 2 && <>
             <Eyebrow>Place and practicalities</Eyebrow><h1 id="step-title" className="mt-3 font-display text-5xl font-medium tracking-[-.04em]">Ground it in reality.</h1><p className="mt-4 text-[15px] text-muted">We use this to make the budget fit your guest count and local cost level.</p>
             <div className="mt-9 grid gap-6">
-              <Field label="City or area" htmlFor="location" error={errors.location}><CityCombobox value={brief.location} onChange={(value) => update("location", value)} error={errors.location} /></Field>
+              <Field label="City or area" htmlFor="location" error={errors.location}><CityCombobox value={brief.location} onChange={(value) => { update("location", value); update("costLevel", inferCostLevel(value)); }} error={errors.location} /></Field>
+              <p className="-mt-3 text-xs leading-5 text-muted">{cityTierLabel(brief.location)} · we set a starting cost level from the city. Override it below if your venue is different.</p>
               <Field label="Total event budget" hint="INR" htmlFor="budget" error={errors.budget}><div className="relative"><span className="absolute top-3.5 left-4 text-muted">₹</span><Input id="budget" className="pl-9 font-display text-2xl" type="number" min={1000} step={10000} value={brief.budget} onChange={(e) => update("budget", Number(e.target.value))} aria-invalid={Boolean(errors.budget)} /></div></Field>
               <input aria-label={`Budget slider, ${formatMoney(brief.budget)}`} type="range" min={10000} max={brief.eventType === "wedding" ? 10000000 : 5000000} step={10000} value={Math.min(brief.budget, brief.eventType === "wedding" ? 10000000 : 5000000)} onChange={(e) => update("budget", Number(e.target.value))} className="h-2 w-full cursor-pointer accent-clay" />
               <fieldset><legend className="mb-3 text-sm font-semibold">How expensive is your area?</legend><div className="grid grid-cols-3 gap-3">{(["low", "average", "high"] as const).map((level) => <label key={level} className={cn("cursor-pointer rounded-2xl border px-3 py-4 text-center transition", brief.costLevel === level ? "border-clay bg-blush" : "border-line bg-paper")}><input type="radio" name="costLevel" className="sr-only" checked={brief.costLevel === level} onChange={() => update("costLevel", level)} /><span className="block text-sm font-semibold capitalize">{level}</span><span className="mt-1 block text-[11px] text-muted">{level === "low" ? "Lower-cost market" : level === "average" ? "Typical city" : "Major metro"}</span></label>)}</div></fieldset>
@@ -183,7 +268,7 @@ export function OnboardingWizard() {
             <Eyebrow>The part that makes it yours</Eyebrow><h1 id="step-title" className="mt-3 font-display text-5xl font-medium tracking-[-.04em]">How should it feel?</h1><p className="mt-4 text-[15px] text-muted">This guides the ideas and the voice of your planning copilot.</p>
             <fieldset className="mt-8"><legend className="sr-only">Event style</legend><div className="grid gap-3 sm:grid-cols-2">{pack.vibes.map((vibe) => <label key={vibe.id} className={cn("cursor-pointer rounded-2xl border p-5 transition", brief.vibe === vibe.id ? "border-clay bg-blush" : "border-line bg-paper")}><input type="radio" name="vibe" className="sr-only" checked={brief.vibe === vibe.id} onChange={() => update("vibe", vibe.id)} /><span className="font-display text-xl font-medium">{vibe.label}</span><span className="mt-2 block text-xs leading-5 text-muted">{vibe.description}</span></label>)}</div></fieldset>
             <div className="mt-7"><Field label="Anything else we should know?" hint="Optional" htmlFor="notes"><Textarea id="notes" value={brief.notes} onChange={(e) => update("notes", e.target.value)} maxLength={1200} placeholder="A rooftop dinner, lots of speeches, and a dance floor for every generation…" /></Field></div>
-            <fieldset className="mt-6"><legend className="text-sm font-semibold">Guest needs to plan around <span className="font-normal text-muted">(optional)</span></legend><div className="mt-3 flex flex-wrap gap-2">{constraintOptions.map((constraint) => { const selected = brief.constraints.includes(constraint); return <button key={constraint} type="button" aria-pressed={selected} onClick={() => update("constraints", selected ? brief.constraints.filter((item) => item !== constraint) : [...brief.constraints, constraint])} className={cn("min-h-10 rounded-full border px-3.5 text-xs font-medium transition", selected ? "border-sage bg-[#e8ede6] text-sage" : "border-line bg-paper text-muted")}>{selected && <Check className="mr-1 inline" size={12} aria-hidden="true" />}{constraint}</button>; })}</div></fieldset>
+            <fieldset className="mt-6"><legend className="text-sm font-semibold">Guest needs to plan around <span className="font-normal text-muted">(optional)</span></legend><div className="mt-3 flex flex-wrap gap-2">{CONSTRAINT_OPTIONS.map((constraint) => { const selected = brief.constraints.includes(constraint); return <button key={constraint} type="button" aria-pressed={selected} onClick={() => update("constraints", selected ? brief.constraints.filter((item) => item !== constraint) : [...brief.constraints, constraint])} className={cn("min-h-10 rounded-full border px-3.5 text-xs font-medium transition", selected ? "border-sage bg-[#e8ede6] text-sage" : "border-line bg-paper text-muted")}>{selected && <Check className="mr-1 inline" size={12} aria-hidden="true" />}{constraint}</button>; })}</div></fieldset>
           </>}
         </section>
 

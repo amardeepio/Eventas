@@ -1,31 +1,55 @@
-import type { Brief, BudgetCategory, DomainPack } from "../types";
+import type { Brief, BudgetCategory, BudgetScaling, DomainPack } from "../types";
 import { clamp } from "@/lib/utils/format";
 
-const COST_INDEX = { low: 0.9, average: 1, high: 1.15 } as const;
+const COST_INDEX = { low: 0.85, average: 1, high: 1.2 } as const;
+const COST_SENSITIVE = new Set([
+  "venue", "catering", "food", "decor", "photo", "attire", "jewelry",
+  "mehndi", "music", "hotel", "transport", "permits", "planner",
+  "stationery", "gifts",
+]);
+
+function scalingOf(category: DomainPack["budget"][number]): BudgetScaling {
+  if (category.scaling) return category.scaling;
+  return category.perGuest ? "linear" : "fixed";
+}
 
 /**
  * Allocates a budget from domain weights and brief context.
  * Floors are reserved first; the remainder follows adjusted weights. Largest-
  * remainder rounding guarantees that the category amounts equal the budget.
+ *
+ * Guest scaling is explicit: per-plate categories (catering, invites, travel)
+ * grow close to linearly, venue grows sublinearly, and fixed costs do not move
+ * with the guest count. This matters for 300–500 guest Indian weddings.
  */
 export function allocateBudget(pack: DomainPack, brief: Brief): BudgetCategory[] {
-  const guestRatio = clamp(Math.pow(brief.guests / pack.defaultGuests, 0.55), 0.55, 1.8);
+  const guestRatio = Math.max(0.1, brief.guests / pack.defaultGuests);
+  const linearRatio = clamp(guestRatio, 0.4, 4);
+  const sublinearRatio = clamp(Math.pow(guestRatio, 0.55), 0.55, 1.8);
   const priorities = new Set(brief.priorities);
 
   const adjusted = pack.budget.map((category) => {
     let weight = category.weight;
-    if (category.perGuest) weight *= guestRatio;
+    const scaling = scalingOf(category);
+    if (scaling === "linear") weight *= linearRatio;
+    else if (scaling === "sublinear") weight *= sublinearRatio;
+
     if (priorities.has(category.id)) weight *= 1.35;
-    if (["venue", "catering", "food", "decor", "permits"].includes(category.id)) {
-      weight *= COST_INDEX[brief.costLevel];
-    }
+    if (COST_SENSITIVE.has(category.id)) weight *= COST_INDEX[brief.costLevel];
+
     if (brief.vibe === "celebration" || brief.vibe === "dance") {
       if (["music", "entertainment", "av"].includes(category.id)) weight *= 1.25;
     }
-    if (["garden", "modern", "playful"].includes(brief.vibe) && category.id === "decor") {
-      weight *= 1.15;
+    if (brief.vibe === "royal") {
+      if (["decor", "venue", "hotel"].includes(category.id)) weight *= 1.15;
     }
-    return { category, weight: Math.max(weight, category.floor) };
+    if (["traditional", "cultural"].includes(brief.vibe) && category.id === "decor") {
+      weight *= 1.1;
+    }
+    if (["garden", "modern", "playful", "intimate"].includes(brief.vibe) && category.id === "decor") {
+      weight *= 1.1;
+    }
+    return { category, weight: Math.max(weight, category.floor), scaling };
   });
 
   const weightTotal = adjusted.reduce((sum, item) => sum + item.weight, 0);
@@ -50,16 +74,20 @@ export function allocateBudget(pack: DomainPack, brief: Brief): BudgetCategory[]
     }
   }
 
-  return raw.map(({ category, amount }) => ({
-    id: category.id,
-    name: category.label,
-    recommended: amount,
-    planned: amount,
-    actual: 0,
-    color: category.color,
-    description: category.description,
-    perGuest: Boolean(category.perGuest),
-  }));
+  return raw.map(({ category, amount }) => {
+    const scaling = scalingOf(category);
+    return {
+      id: category.id,
+      name: category.label,
+      recommended: amount,
+      planned: amount,
+      actual: 0,
+      color: category.color,
+      description: category.description,
+      perGuest: scaling !== "fixed",
+      scaling,
+    };
+  });
 }
 
 export function getBudgetTotals(categories: BudgetCategory[]) {
