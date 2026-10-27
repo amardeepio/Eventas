@@ -11,6 +11,8 @@ import { LanguageProvider } from "@/lib/i18n/language-provider";
 
 describe("core presentation", () => {
   it("renders the landing page without critical axe violations", async () => {
+    // Keep the first-visit landing tour out of the static axe snapshot.
+    window.localStorage.setItem("eventas.tour.landing.v1", "2");
     const { container } = render(<LanguageProvider><PlanProvider><Landing /></PlanProvider></LanguageProvider>);
     const results = await axe(container);
     expect(results.violations).toEqual([]);

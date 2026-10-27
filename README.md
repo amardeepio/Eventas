@@ -5,9 +5,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Node](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![Tests](https://img.shields.io/badge/tests-150_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
+[![Tests](https://img.shields.io/badge/tests-171_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
 [![Coverage](https://img.shields.io/badge/coverage-87%25_statements_%7C_91%25_lines-brightgreen)](#testing)
-[![Playwright](https://img.shields.io/badge/Playwright-14_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
+[![Playwright](https://img.shields.io/badge/Playwright-24_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
 [![Accessibility](https://img.shields.io/badge/a11y-axe_WCAG_2.1_AA-4c1)](#accessibility)
 [![Local-first](https://img.shields.io/badge/data-local--first-9f4e39)](#how-data-is-saved)
 [![License](https://img.shields.io/badge/license-competition_entry-lightgrey)](#license)
@@ -70,7 +70,7 @@ Budget changes are never applied silently. The **Rebalance with AI** flow return
 A floating **Ask about Eventas** button answers questions about the product without requiring a plan: how budgeting works, the three event types, AI use, and exactly how data is stored. It is rate-limited and protected by the same prompt-injection tripwire as the planning assistant.
 
 ### 5. Local-first and instant
-No account, database, or onboarding email. The active plan and draft live in `localStorage`, are schema-validated on read, and can be exported as a print-ready PDF with functions, muhurat, budget, timeline, vendor notes, and saved ideas.
+No account, database, or onboarding email. A first-run guided tour walks new hosts through the brief, every view their plan actually uses, budget health, next moves, vendors, ideas, the copilot, and export. It adapts to the event type, navigates the real views, offers hands-on actions (tick a milestone, mark a vendor as contacted, open the copilot), respects reduced motion, docks as a bottom sheet on phones, and can be replayed from the sidebar or menu. A separate first-visit tour on the landing page introduces the promise, preview, event types, workflow, privacy, and the guide. The header help centre can replay either tour, reset the hints, or jump to the copilot. The active plan and draft live in `localStorage`, are schema-validated on read, and can be exported as a print-ready PDF, a calendar file with functions and milestones, or budget/timeline spreadsheets. The last change can be undone from the header. Plans can be deleted from the studio menu or footer.
 
 ### How data is saved
 
@@ -213,7 +213,7 @@ src/
     api/health/route.ts       readiness + AI configuration flag
   components/ui/              button, card, field, logo, progress ring
   features/
-    landing/ onboarding/ overview/ functions/ budget/ timeline/ vendors/ ideas/ assistant/
+    landing/ onboarding/ overview/ functions/ budget/ timeline/ vendors/ ideas/ assistant/ tour/ export/
   lib/
     domain/
       types.ts                shared domain types (tradition, functions, muhurat)
@@ -407,7 +407,7 @@ Eventas is tuned for phones as well as the desktop studio:
 | API | 200 demo contracts, 400 malformed input, 429 abuse, guarded chatbot responses, safe fallback, wedding draft, vendor message, translation validation and graceful degradation |
 | Storage | Hydration, v1 migration, create/update/reset, persistence, enrichment merge, malformed responses |
 | Presentation | axe scan of landing, chart text alternatives |
-| Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions; Hindi switch persists across reload, translates plan content, and both assistants send the selected language; print-ready PDF export; phone header fits with an animated menu sheet; pull-to-refresh reloads on release |
+| Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions; Hindi switch persists across reload, translates plan content, and both assistants send the selected language; calendar, CSV, and print-ready PDF export; undo; phone header fits with an animated menu sheet; pull-to-refresh reloads on release; landing and studio tours (event-aware steps, real view navigation, interactive milestone/vendor actions, resume after reload, skip vs dismiss, help/reset, phone bottom sheet, tablet/landscape/320px, replay from the menu) |
 
 Playwright runs against a **production build** on port `3100` (`npm run build && npm run start -- --port 3100`). CI runs lint, typecheck, coverage, build, and browser tests on Node 22 with **no secrets**, so Demo mode is exercised too. The live Groq path is covered by route contracts and manual smoke tests; it always falls back to the deterministic draft.
 

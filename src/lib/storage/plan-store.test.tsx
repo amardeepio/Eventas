@@ -33,6 +33,24 @@ describe("local plan store", () => {
     await waitFor(() => expect(localStorage.getItem("eventas.plan.v2")).toBeNull());
   });
 
+  it("undoes the last plan change and restores the previous snapshot", async () => {
+    const { result } = renderHook(() => usePlan(), { wrapper });
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    act(() => { result.current.createPlan(getSampleBrief("birthday")); });
+    const originalGuests = result.current.plan?.brief.guests;
+    expect(result.current.canUndo).toBe(false);
+
+    act(() => {
+      result.current.updatePlan((current) => ({ ...current, brief: { ...current.brief, guests: 80 } }));
+    });
+    expect(result.current.plan?.brief.guests).toBe(80);
+    expect(result.current.canUndo).toBe(true);
+
+    act(() => { result.current.undo(); });
+    expect(result.current.plan?.brief.guests).toBe(originalGuests);
+    expect(result.current.canUndo).toBe(false);
+  });
+
   it("migrates a v1 plan without losing its brief or budget", async () => {
     const legacyPlan = buildPlan(getSampleBrief("wedding"));
     const legacy = {

@@ -88,7 +88,7 @@ export function SiteAssistant() {
 
   return <Dialog.Root onOpenChange={(next) => { if (next && "vibrate" in navigator) navigator.vibrate(8); }}>
     <Dialog.Trigger asChild>
-      <button data-testid="site-assistant-trigger" className="group fixed right-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-13 items-center gap-2.5 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(40,30,20,.28)] transition hover:-translate-y-0.5 hover:bg-clay-dark active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-clay sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]" aria-label={t("Ask about Eventas")}>
+      <button data-testid="site-assistant-trigger" data-tour="landing-assistant" className="group fixed right-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-13 items-center gap-2.5 rounded-full bg-ink px-5 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(40,30,20,.28)] transition hover:-translate-y-0.5 hover:bg-clay-dark active:scale-[.97] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-clay sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]" aria-label={t("Ask about Eventas")}>
         <span className="relative grid size-7 place-items-center rounded-full bg-white/10"><MessageCircle size={15} aria-hidden="true" /><span className="absolute -top-0.5 -right-0.5 size-2 animate-pulse rounded-full bg-[#dca68e] ring-2 ring-ink" /></span>
         <span className="hidden sm:inline">{t("Ask about Eventas")}</span>
         <span className="sm:hidden">{t("Ask")}</span>

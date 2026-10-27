@@ -1,5 +1,20 @@
 import { expect, test } from "@playwright/test";
 
+// Keep each journey's AI budget in its own rate-limit bucket.
+test.use({ extraHTTPHeaders: { "x-forwarded-for": "198.51.100.11" } });
+
+test.beforeEach(async ({ page }) => {
+  // These journeys exercise the studio chrome, not the first-run tour.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("eventas.tour.seen.v1", "2");
+      window.localStorage.setItem("eventas.tour.landing.v1", "2");
+    } catch {
+      // Storage can be unavailable on the initial about:blank document.
+    }
+  });
+});
+
 test("a sample wedding becomes an editable, persistent plan", async ({ page }) => {
   await page.goto("/new?sample=wedding");
   await expect(page).toHaveURL(/\/plan/, { timeout: 15_000 });
@@ -115,12 +130,23 @@ test("the landing page is responsive and visually complete", async ({ page }) =>
   await page.screenshot({ path: "test-results/landing-mobile.png", fullPage: true });
 });
 
-test("the plan opens a print-ready PDF document", async ({ page }) => {
+test("the plan exports a calendar, spreadsheets, and a print-ready PDF", async ({ page }) => {
   await page.goto("/new?sample=wedding");
   await expect(page).toHaveURL(/\/plan/, { timeout: 20_000 });
 
+  await page.getByRole("button", { name: "Export plan" }).click();
+  const dialog = page.getByRole("dialog", { name: /export plan/i });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Calendar (.ics)");
+
+  const downloadPromise = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: /Calendar \(\.ics\)/ }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.ics$/);
+  await expect(dialog.getByRole("status")).toContainText(/downloaded/i);
+
   const popupPromise = page.waitForEvent("popup");
-  await page.getByRole("button", { name: "Download plan as PDF" }).click();
+  await dialog.getByRole("button", { name: /Print \/ Save as PDF/ }).click();
   const popup = await popupPromise;
 
   await expect(popup).toHaveURL(/\/plan\/print/);

@@ -1,5 +1,16 @@
 import { expect, test } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  // The landing tour has its own journey; keep these phone checks focused.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("eventas.tour.landing.v1", "2");
+    } catch {
+      // Storage can be unavailable on the initial about:blank document.
+    }
+  });
+});
+
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
 test("the phone header fits and the menu opens as a sheet", async ({ page }) => {
@@ -15,6 +26,7 @@ test("the phone header fits and the menu opens as a sheet", async ({ page }) => 
   await expect(sheet.getByTestId("language-switcher")).toBeVisible();
   await expect(sheet.getByRole("link", { name: /Start planning/ })).toBeVisible();
   await expect(sheet.getByRole("link", { name: /How it works/ })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Tour" })).toBeVisible();
 
   await page.getByRole("button", { name: "Close menu" }).click();
   await expect(sheet).toBeHidden();

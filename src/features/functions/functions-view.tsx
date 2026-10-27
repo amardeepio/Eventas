@@ -140,7 +140,7 @@ export function FunctionsView() {
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
-      <Card className={cn("p-6", muhurat ? "border-clay/25 bg-blush/30" : "")}>
+      <Card className={cn("p-6", muhurat ? "border-clay/25 bg-blush/30" : "")} data-tour="functions-hero">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Eyebrow>Muhurat</Eyebrow>

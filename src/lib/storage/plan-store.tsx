@@ -15,6 +15,8 @@ interface PlanContextValue {
   hydrated: boolean;
   createPlan: (brief: Brief) => Plan;
   updatePlan: (updater: (current: Plan) => Plan) => void;
+  undo: () => void;
+  canUndo: boolean;
   resetPlan: () => void;
   enrichWithAi: (plan: Plan) => Promise<void>;
 }
@@ -25,7 +27,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const { language } = useLanguage();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
   const planRef = useRef<Plan | null>(null);
+  const history = useRef<Plan[]>([]);
   useEffect(() => { planRef.current = plan; }, [plan]);
 
   useEffect(() => {
@@ -64,15 +68,38 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
 
   const createPlan = useCallback((brief: Brief) => {
     const created = buildPlan(brief);
+    history.current = [];
+    setCanUndo(false);
+    planRef.current = created;
     setPlan(created);
     return created;
   }, []);
 
   const updatePlan = useCallback((updater: (current: Plan) => Plan) => {
-    setPlan((current) => current ? updater(current) : current);
+    const current = planRef.current;
+    if (!current) return;
+    const next = updater(current);
+    if (next === current) return;
+    history.current = [...history.current.slice(-19), current];
+    setCanUndo(true);
+    planRef.current = next;
+    setPlan(next);
   }, []);
 
-  const resetPlan = useCallback(() => setPlan(null), []);
+  const undo = useCallback(() => {
+    const previous = history.current.pop();
+    if (!previous) return;
+    planRef.current = previous;
+    setPlan(previous);
+    setCanUndo(history.current.length > 0);
+  }, []);
+
+  const resetPlan = useCallback(() => {
+    history.current = [];
+    setCanUndo(false);
+    planRef.current = null;
+    setPlan(null);
+  }, []);
 
   const enrichWithAi = useCallback(async (source: Plan) => {
     try {
@@ -96,7 +123,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     } catch { /* Baseline plan is intentionally complete without enrichment. */ }
   }, [updatePlan, language]);
 
-  const value = useMemo(() => ({ plan, hydrated, createPlan, updatePlan, resetPlan, enrichWithAi }), [plan, hydrated, createPlan, updatePlan, resetPlan, enrichWithAi]);
+  const value = useMemo(() => ({ plan, hydrated, createPlan, updatePlan, undo, canUndo, resetPlan, enrichWithAi }), [plan, hydrated, createPlan, updatePlan, undo, canUndo, resetPlan, enrichWithAi]);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }
 

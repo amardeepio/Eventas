@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { downloadPlan, planToMarkdown } from "./export-plan";
+import { downloadPlan, planToBudgetCsv, planToCalendar, planToMarkdown, planToTimelineCsv } from "./export-plan";
 import { buildPlan } from "../domain/engine/plan";
 import { getSampleBrief } from "../domain/packs";
 import { formatDate, formatMoney, daysUntil, clamp } from "./format";
@@ -31,6 +31,29 @@ describe("plan export", () => {
     expect(markdown).toContain("Call the venue manager.");
     expect(markdown).toContain("quoted");
     expect(markdown).not.toContain("No saved ideas yet.");
+  });
+
+  it("exports a calendar with functions, the muhurat, and open milestones", () => {
+    const plan = buildPlan(getSampleBrief("wedding", new Date("2026-10-24")));
+    const calendar = planToCalendar({
+      ...plan,
+      muhurat: { date: "2026-11-21", start: "06:48", end: "23:59", label: "Vivah", source: "Test source" },
+    });
+    expect(calendar).toContain("BEGIN:VCALENDAR");
+    expect(calendar).toContain("SUMMARY:Mehndi");
+    expect(calendar).toContain("SUMMARY:Muhurat · Vivah");
+    expect(calendar).toContain("DTSTART:20261121T064800");
+    expect(calendar).toContain("END:VCALENDAR");
+  });
+
+  it("exports the budget and timeline as spreadsheet-ready CSV", () => {
+    const plan = buildPlan(getSampleBrief("community", new Date("2026-10-24")));
+    const budget = planToBudgetCsv(plan);
+    expect(budget.split("\r\n")[0]).toBe("Category,Suggested,Planned,Actual");
+    expect(budget).toContain("Food & water");
+    const timeline = planToTimelineCsv(plan);
+    expect(timeline.split("\r\n")[0]).toBe("Task,Phase,Due date,Status,Priority,Function");
+    expect(timeline).toContain("Define purpose, audience, and success");
   });
 
   it("opens the print-ready view for PDF export", () => {

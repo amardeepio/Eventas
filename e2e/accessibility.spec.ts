@@ -1,6 +1,21 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+// Keep each journey's AI budget in its own rate-limit bucket.
+test.use({ extraHTTPHeaders: { "x-forwarded-for": "198.51.100.12" } });
+
+test.beforeEach(async ({ page }) => {
+  // Keep axe focused on the page itself, not the first-run tour overlay.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("eventas.tour.seen.v1", "2");
+      window.localStorage.setItem("eventas.tour.landing.v1", "2");
+    } catch {
+      // Storage can be unavailable on the initial about:blank document.
+    }
+  });
+});
+
 async function seriousViolations(page: import("@playwright/test").Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

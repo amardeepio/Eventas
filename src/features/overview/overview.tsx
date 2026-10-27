@@ -32,7 +32,7 @@ export function Overview({ onNavigate, onOpenAssistant }: OverviewProps) {
 
   return <div className="space-y-6">
     <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-      <Card className="grain relative overflow-hidden bg-ink p-7 text-white sm:p-9">
+      <Card className="grain relative min-w-0 overflow-hidden bg-ink p-7 text-white sm:p-9" data-tour="overview-hero">
         <div className="absolute -top-24 -right-24 size-80 rounded-full border-[55px] border-white/[.035]" aria-hidden="true" />
         <div className="relative">
           <div className="flex flex-wrap items-center gap-3"><Eyebrow className="text-[#dfa990]">{pack.eyebrow}</Eyebrow><span className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/60">{plan.ai.mode === "live" ? "AI personalized" : "Smart local plan"}</span></div>
@@ -49,14 +49,14 @@ export function Overview({ onNavigate, onOpenAssistant }: OverviewProps) {
         </div>
       </Card>
 
-      <Card className="flex items-center gap-6 p-6 sm:p-8">
+      <Card className="flex min-w-0 flex-col items-start gap-6 p-6 sm:flex-row sm:items-center sm:p-8" data-tour="budget-health">
         <ProgressRing value={allocationPercent} size={148} label={`${Math.round(allocationPercent)} percent of budget allocated`}><strong className="font-display text-3xl font-medium">{Math.round(allocationPercent)}%</strong><span className="text-[9px] font-bold tracking-wider text-muted uppercase">allocated</span></ProgressRing>
         <div className="min-w-0"><Eyebrow>Budget health</Eyebrow><h3 className="mt-2 font-display text-2xl font-medium">{totals.planned > plan.brief.budget ? "Needs a rebalance" : "Room to breathe"}</h3><dl className="mt-4 space-y-2 text-xs"><div className="flex justify-between gap-4"><dt className="text-muted">Total budget</dt><dd className="font-semibold">{formatMoney(plan.brief.budget)}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted">Still unallocated</dt><dd className="font-semibold text-sage">{formatMoney(Math.max(0, plan.brief.budget - totals.planned))}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted">Actual spend</dt><dd className="font-semibold">{formatMoney(totals.actual)}</dd></div></dl><button onClick={() => onNavigate("budget")} className="mt-4 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-clay">Open budget <ArrowRight size={13} /></button></div>
       </Card>
     </section>
 
     <section aria-labelledby="next-moves" className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-      <Card className="p-6 sm:p-8">
+      <Card className="p-6 sm:p-8" data-tour="next-moves">
         <div className="mb-5 flex items-center justify-between"><div><Eyebrow>Keep the momentum</Eyebrow><h2 id="next-moves" className="mt-2 font-display text-3xl font-medium">Your next three moves</h2></div><Button variant="ghost" size="sm" onClick={() => onNavigate("timeline")}>Full timeline <ArrowRight size={14} /></Button></div>
         <div className="divide-y divide-line">{nextTasks.map((task, index) => <article key={task.id} className="group flex gap-4 py-5 first:pt-1"><button onClick={() => updatePlan((current) => ({ ...current, timeline: current.timeline.map((item) => item.id === task.id ? { ...item, status: "done" } : item) }))} className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border border-line text-muted transition hover:border-sage hover:bg-[#e8ede6] hover:text-sage" aria-label={`Mark “${task.title}” complete`}><Circle size={17} aria-hidden="true" /></button><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="text-[10px] font-bold text-clay">0{index + 1}</span><h3 className="font-display text-xl font-medium">{task.title}</h3>{task.priority === "high" && <Badge className="border-clay/20 bg-blush text-clay">Priority</Badge>}</div><p className="mt-2 text-sm leading-6 text-muted">{task.description}</p><p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-muted"><Clock3 size={12} aria-hidden="true" />{task.phase} · by {formatDate(task.dueDate)}</p></div></article>)}</div>
       </Card>

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Compass, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { Logo } from "@/components/ui/logo";
+import { useLanguage } from "@/lib/i18n/language-provider";
+import { useLandingTour } from "@/features/tour/landing-tour";
 
 /**
  * Phone-sized landing navigation. The header keeps only the brand, the primary
@@ -14,6 +16,8 @@ import { Logo } from "@/components/ui/logo";
  */
 export function LandingMobileNav({ savedPlan }: { savedPlan: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
+  const { start: startTour } = useLandingTour();
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (next && "vibrate" in navigator) navigator.vibrate(8);
@@ -40,6 +44,7 @@ export function LandingMobileNav({ savedPlan }: { savedPlan: React.ReactNode }) 
         </div>
         <nav aria-label="Mobile navigation" className="menu-stagger mt-8 space-y-2">
           <a href="#how-it-works" onClick={() => setOpen(false)} className="flex min-h-12 items-center rounded-2xl px-4 text-sm font-semibold text-ink transition hover:bg-soft">How it works</a>
+          <button onClick={() => { setOpen(false); window.setTimeout(startTour, 240); }} className="flex min-h-12 w-full items-center gap-2 rounded-2xl px-4 text-sm font-semibold text-ink transition hover:bg-soft"><Compass size={15} aria-hidden="true" />{t("Tour")}</button>
           <div onClick={() => setOpen(false)}>{savedPlan}</div>
           <Link href="/new" onClick={() => setOpen(false)} className="flex min-h-12 items-center justify-between rounded-2xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-clay-dark">
             Start planning <ArrowRight size={15} aria-hidden="true" />

@@ -1,5 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  // These journeys exercise language changes, not the first-run tour.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("eventas.tour.seen.v1", "2");
+      window.localStorage.setItem("eventas.tour.landing.v1", "2");
+    } catch {
+      // Storage can be unavailable on the initial about:blank document.
+    }
+  });
+});
+
 /**
  * Google Translate is stubbed so the journey is deterministic and runs without a
  * key. The prefix keeps assertions independent of machine-translation wording.

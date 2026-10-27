@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui/logo";
 import { Eyebrow } from "@/components/ui/card";
 import { SavedPlanLink } from "./saved-plan-link";
 import { SiteAssistant } from "@/features/site-assistant/site-assistant";
+import { LandingTourProvider, LandingTourTrigger } from "@/features/tour/landing-tour";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { LandingMobileNav } from "./mobile-nav";
 import { getPack, getSampleBrief, packList } from "@/lib/domain/packs";
@@ -25,7 +26,7 @@ const previewItems = ["catering", "venue", "photo"].flatMap((id) => {
 const previewDays = daysUntil(previewBrief.date, previewNow);
 
 export function Landing() {
-  return <div className="min-h-dvh overflow-hidden">
+  return <LandingTourProvider><div className="min-h-dvh overflow-hidden">
     <header className="relative z-20 mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-4 sm:px-8 sm:py-6 lg:px-12">
       <Logo className="shrink-0" />
       <nav aria-label="Main navigation" className="flex min-w-0 items-center gap-1.5 sm:gap-5">
@@ -44,7 +45,7 @@ export function Landing() {
     <main id="main-content">
       <section className="relative mx-auto grid max-w-[1440px] items-center gap-14 px-5 pt-12 pb-24 sm:px-8 lg:grid-cols-[1.03fr_.97fr] lg:px-12 lg:pt-20 lg:pb-32">
         <div className="absolute top-0 left-[42%] -z-10 size-[500px] rounded-full border border-clay/10" aria-hidden="true" />
-        <div className="max-w-[680px] animate-rise">
+        <div className="max-w-[680px] animate-rise" data-tour="landing-hero">
           <Eyebrow className="mb-6 flex items-center gap-2"><Sparkles size={14} aria-hidden="true" /> AI-powered planning, human-sized decisions</Eyebrow>
           <h1 className="font-display text-[clamp(3.4rem,7vw,6.7rem)] leading-[.91] font-medium tracking-[-.055em] text-balance">
             Make room for<br /><em className="font-light text-clay">the moment.</em>
@@ -55,6 +56,7 @@ export function Landing() {
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link href="/new" className="inline-flex min-h-14 items-center gap-3 rounded-full bg-clay px-7 text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(165,83,61,.2)] transition hover:-translate-y-0.5 hover:bg-clay-dark active:scale-[.98] active:translate-y-0">Plan my event <ArrowRight size={18} aria-hidden="true" /></Link>
             <Link href="/new?sample=wedding" className="inline-flex min-h-14 items-center gap-2 rounded-full px-4 text-sm font-semibold text-ink underline decoration-line underline-offset-8 transition hover:decoration-clay">See a sample wedding <ArrowUpRight size={16} aria-hidden="true" /></Link>
+            <LandingTourTrigger className="min-h-14 px-4 font-semibold" />
           </div>
           <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-xs font-medium text-muted" aria-label="Product benefits">
             {["Ready in 60 seconds", "No sign-up", "Stored on your device"].map((item) => <li key={item} className="flex items-center gap-1.5"><Check size={14} className="text-sage" aria-hidden="true" />{item}</li>)}
@@ -63,7 +65,7 @@ export function Landing() {
         <PlanningPreview />
       </section>
 
-      <section aria-labelledby="event-types-title" className="border-y border-line/70 bg-paper/55 px-5 py-24 sm:px-8 lg:px-12">
+      <section aria-labelledby="event-types-title" data-tour="landing-types" className="border-y border-line/70 bg-paper/55 px-5 py-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1320px]">
           <div className="mb-12 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div><Eyebrow>Every kind of together</Eyebrow><h2 id="event-types-title" className="mt-3 font-display text-4xl font-medium tracking-[-.035em] sm:text-5xl">What are we planning?</h2></div>
@@ -84,7 +86,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section id="how-it-works" aria-labelledby="how-title" className="mx-auto max-w-[1320px] px-5 py-28 sm:px-8 lg:px-12">
+      <section id="how-it-works" aria-labelledby="how-title" data-tour="landing-how" className="mx-auto max-w-[1320px] px-5 py-28 sm:px-8 lg:px-12">
         <div className="grid gap-16 lg:grid-cols-[.75fr_1.25fr]">
           <div><Eyebrow>A calmer way to plan</Eyebrow><h2 id="how-title" className="mt-4 font-display text-5xl leading-[1.04] font-medium tracking-[-.045em] text-balance">From “where do we start?” to “we’ve got this.”</h2><p className="mt-6 text-[15px] leading-7 text-muted">Smart defaults do the organizing. You make the decisions that matter.</p></div>
           <ol className="divide-y divide-line border-y border-line">
@@ -97,7 +99,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section aria-labelledby="trust-title" className="px-5 pb-24 sm:px-8 lg:px-12">
+      <section aria-labelledby="trust-title" data-tour="landing-trust" className="px-5 pb-24 sm:px-8 lg:px-12">
         <div className="grain relative mx-auto grid max-w-[1320px] overflow-hidden rounded-[2.5rem] bg-ink px-7 py-12 text-white sm:px-12 lg:grid-cols-[1fr_1.2fr] lg:items-center lg:px-16 lg:py-16">
           <Flower2 className="absolute -right-10 -bottom-12 size-64 text-white/5" strokeWidth={.6} aria-hidden="true" />
           <div className="relative"><Eyebrow className="text-[#dca68e]">Built on good judgment</Eyebrow><h2 id="trust-title" className="mt-4 font-display text-4xl leading-tight font-medium tracking-[-.035em]">AI for imagination.<br />Logic for the numbers.</h2></div>
@@ -109,11 +111,11 @@ export function Landing() {
     </main>
     <footer className="mx-auto flex max-w-[1440px] flex-col gap-5 border-t border-line px-5 py-8 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12"><Logo /><p>Thoughtful plans for meaningful gatherings.</p><p>Eventas · Local-first planning</p></footer>
     <SiteAssistant />
-  </div>;
+  </div></LandingTourProvider>;
 }
 
 function PlanningPreview() {
-  return <div className="relative mx-auto w-full max-w-[590px] lg:mx-0" aria-label="Preview of an Eventas wedding plan" role="img">
+  return <div className="relative mx-auto w-full max-w-[590px] lg:mx-0" data-tour="landing-preview" aria-label="Preview of an Eventas wedding plan" role="img">
     <div className="absolute -top-8 -right-5 size-32 rounded-full border border-gold/30" aria-hidden="true" />
     <div className="relative rotate-[1.5deg] rounded-[2rem] border border-white/80 bg-paper p-5 shadow-[0_35px_90px_rgba(63,45,30,.14)] transition duration-500 hover:rotate-0 sm:p-7">
       <div className="flex items-start justify-between border-b border-line pb-5"><div><p className="text-[10px] font-bold tracking-[.17em] text-clay uppercase">Your wedding plan</p><h2 className="mt-2 font-display text-[28px] font-medium tracking-[-.03em]">Maya &amp; Dev</h2><p className="mt-1 flex items-center gap-1.5 text-xs text-muted"><MapPin size={12} aria-hidden="true" /> Udaipur · 300 guests</p></div><span className="rounded-full bg-[#e9eee7] px-3 py-1.5 text-[10px] font-bold text-sage">ON TRACK</span></div>
