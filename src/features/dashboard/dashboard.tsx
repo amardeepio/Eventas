@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bot, CalendarDays, CalendarRange, CircleHelp, Compass, Download, LayoutDashboard, Lightbulb, Menu, Pencil, Plus, Store, Trash2, Undo2, WalletCards, X } from "lucide-react";
+import { Bot, CalendarDays, CalendarRange, CircleHelp, ClipboardList, Compass, Download, Files, LayoutDashboard, Lightbulb, Menu, Pencil, Plus, Store, Trash2, Undo2, Users, WalletCards, X } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,13 @@ import { FunctionsView } from "../functions/functions-view";
 import { TimelineView } from "../timeline/timeline-view";
 import { VendorsView } from "../vendors/vendors-view";
 import { IdeasView } from "../ideas/ideas-view";
+import { GuestsView } from "../guests/guests-view";
+import { RunSheetView } from "../run-sheet/run-sheet-view";
 import { Assistant } from "../assistant/assistant";
 import { GuidedTour, useWarmStudioTour } from "../tour/guided-tour";
 import { HelpDialog } from "../tour/help-dialog";
 import { ExportDialog } from "../export/export-dialog";
+import { PlanSwitcher } from "../plans/plan-switcher";
 import {
   clearTourProgress,
   clearTourSnooze,
@@ -38,6 +41,8 @@ const views = [
   { id: "functions", label: "Functions", icon: CalendarRange },
   { id: "budget", label: "Budget", icon: WalletCards },
   { id: "timeline", label: "Timeline", icon: CalendarDays },
+  { id: "guests", label: "Guests", icon: Users },
+  { id: "run-sheet", label: "Run sheet", icon: ClipboardList },
   { id: "vendors", label: "Vendors", icon: Store },
   { id: "ideas", label: "Ideas", icon: Lightbulb },
 ] as const;
@@ -51,6 +56,7 @@ export function Dashboard() {
   const [tourOpen, setTourOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [plansOpen, setPlansOpen] = useState(false);
   const userInteracted = useRef(false);
 
   // Warm the tour copy for the active language before the first-run tour opens.
@@ -121,27 +127,28 @@ export function Dashboard() {
 
   const pack = getPack(plan.brief.eventType);
   const days = daysUntil(plan.brief.date);
-  const titles: Record<View, string> = { overview: "Your planning studio", functions: "The shape of the celebration", budget: "A budget that adds up", timeline: "The path to the day", vendors: "Your vendor little black book", ideas: "Ideas with your name on them" };
+  const titles: Record<View, string> = { overview: "Your planning studio", functions: "The shape of the celebration", budget: "A budget that adds up", timeline: "The path to the day", guests: "The people in the room", "run-sheet": "The day, hour by hour", vendors: "Your vendor little black book", ideas: "Ideas with your name on them" };
   const visibleViews = views.filter((item) => item.id !== "functions" || plan.brief.eventType === "wedding");
   const nav = (mobile = false) => <nav aria-label="Plan sections" data-tour={mobile ? "nav-mobile" : "nav-desktop"} className={cn("flex flex-col gap-1", mobile && "menu-stagger")}>{visibleViews.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => { setView(id); setNavOpen(false); }} aria-current={view === id ? "page" : undefined} className={cn("flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-semibold transition", view === id ? "bg-ink text-white shadow-sm" : "text-muted hover:bg-soft hover:text-ink")}><Icon size={18} strokeWidth={1.7} aria-hidden="true" />{label}{id === "timeline" && <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-[10px]">{plan.timeline.filter((task) => task.status !== "done").length}</span>}</button>)}</nav>;
 
   return <div className="min-h-dvh">
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto border-r border-line/80 bg-paper/70 p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] backdrop-blur-xl scrollbar-thin lg:flex">
       <Logo className="mb-8 px-2" />
-      <div className="mb-6 rounded-2xl bg-ink p-4 text-white" data-tour="plan-summary"><p className="text-[9px] font-bold tracking-[.17em] text-white/50 uppercase">{pack.label} plan</p><p className="mt-2 truncate font-display text-xl">{plan.brief.title}</p><p className="mt-1 text-[11px] text-white/55">{formatDate(plan.brief.date, { month: "long", day: "numeric", timeZone: "UTC" })} · {plan.brief.guests} guests</p></div>
+      <button type="button" onClick={() => setPlansOpen(true)} className="mb-6 rounded-2xl bg-ink p-4 text-left text-white transition hover:bg-[#2a241f]" data-tour="plan-summary"><p className="text-[9px] font-bold tracking-[.17em] text-white/50 uppercase">{pack.label} plan · switch</p><p className="mt-2 truncate font-display text-xl">{plan.brief.title}</p><p className="mt-1 text-[11px] text-white/55">{formatDate(plan.brief.date, { month: "long", day: "numeric", timeZone: "UTC" })} · {plan.brief.guests} guests</p></button>
       {nav()}
-      <div className="mt-auto space-y-2 pt-6" data-tour="sidebar-actions"><LanguageSwitcher label="Language" className="w-full justify-between" /><Button data-testid="open-assistant" data-tour="assistant-desktop" className="w-full" onClick={() => setAssistantOpen(true)}><Bot size={17} aria-hidden="true" /> Ask Eventas</Button><button onClick={undo} disabled={!canUndo} className="flex min-h-10 w-full items-center justify-center gap-2 text-xs font-medium text-muted transition hover:text-ink disabled:opacity-40"><Undo2 size={13} aria-hidden="true" /> Undo last change</button><Link href="/new?edit=1" className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Pencil size={13} /> Edit brief</Link><button onClick={startTour} className="flex min-h-10 w-full items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Compass size={13} aria-hidden="true" /> Take the tour</button><Link href="/new" onClick={(event) => { if (!window.confirm("Start a new plan? Your current plan will be replaced. Export it first if you want to keep a copy.")) event.preventDefault(); }} className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Plus size={13} /> New event plan</Link><button onClick={() => { if (window.confirm("Delete this locally saved plan and start over?")) resetPlan(); }} className="flex min-h-10 w-full items-center justify-center gap-2 text-xs font-medium text-muted hover:text-red-700"><Trash2 size={13} aria-hidden="true" /> Delete plan</button></div>
+      <div className="mt-auto space-y-2 pt-6" data-tour="sidebar-actions"><LanguageSwitcher label="Language" className="w-full justify-between" /><Button data-testid="open-assistant" data-tour="assistant-desktop" className="w-full" onClick={() => setAssistantOpen(true)}><Bot size={17} aria-hidden="true" /> Ask Eventas</Button><button onClick={undo} disabled={!canUndo} className="flex min-h-10 w-full items-center justify-center gap-2 text-xs font-medium text-muted transition hover:text-ink disabled:opacity-40"><Undo2 size={13} aria-hidden="true" /> Undo last change</button><Link href="/new?edit=1" className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Pencil size={13} /> Edit brief</Link><button onClick={startTour} className="flex min-h-10 w-full items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Compass size={13} aria-hidden="true" /> Take the tour</button><Link href="/new" className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-muted hover:text-ink"><Plus size={13} /> New event plan</Link><button onClick={() => { if (window.confirm("Delete this locally saved plan? Export a backup first if you might need it.")) resetPlan(); }} className="flex min-h-10 w-full items-center justify-center gap-2 text-xs font-medium text-muted hover:text-red-700"><Trash2 size={13} aria-hidden="true" /> Delete plan</button></div>
     </aside>
 
     <div className="lg:pl-[248px]">
       <header className="sticky top-0 z-20 border-b border-line/70 bg-bone/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl" data-tour="plan-header">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-7 lg:px-10">
-          <Dialog.Root open={navOpen} onOpenChange={(next) => { setNavOpen(next); if (next && "vibrate" in navigator) navigator.vibrate(8); }}><Dialog.Trigger asChild><Button variant="ghost" size="icon" className="lg:hidden" data-tour="menu-trigger" aria-label="Open navigation"><Menu size={20} /></Button></Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-sm data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out lg:hidden" /><Dialog.Content className="fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto bg-paper p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl outline-none data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out scrollbar-thin lg:hidden"><div className="mb-8 flex items-center justify-between"><Dialog.Title className="sr-only">Plan navigation</Dialog.Title><Logo /><Dialog.Close asChild><Button variant="ghost" size="icon" aria-label="Close navigation"><X size={19} /></Button></Dialog.Close></div>{nav(true)}<div className="mt-4 space-y-1 border-t border-line pt-4"><Link href="/new?edit=1" onClick={() => setNavOpen(false)} className="flex min-h-11 items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Pencil size={13} aria-hidden="true" /> Edit brief</Link><button onClick={() => { undo(); setNavOpen(false); }} disabled={!canUndo} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink disabled:opacity-40"><Undo2 size={13} aria-hidden="true" /> Undo last change</button><button onClick={() => { setNavOpen(false); window.setTimeout(startTour, 240); }} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Compass size={14} aria-hidden="true" /> Take the tour</button><Link href="/new" onClick={(event) => { if (!window.confirm("Start a new plan? Your current plan will be replaced. Export it first if you want to keep a copy.")) event.preventDefault(); else setNavOpen(false); }} className="flex min-h-11 items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Plus size={13} aria-hidden="true" /> New event plan</Link><button onClick={() => { if (window.confirm("Delete this locally saved plan and start over?")) { resetPlan(); setNavOpen(false); } }} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-red-700"><Trash2 size={13} aria-hidden="true" /> Delete plan</button></div><div className="mt-4 border-t border-line pt-4"><LanguageSwitcher label="Language" className="w-full justify-between" /></div></Dialog.Content></Dialog.Portal></Dialog.Root>
+          <Dialog.Root open={navOpen} onOpenChange={(next) => { setNavOpen(next); if (next && "vibrate" in navigator) navigator.vibrate(8); }}><Dialog.Trigger asChild><Button variant="ghost" size="icon" className="lg:hidden" data-tour="menu-trigger" aria-label="Open navigation"><Menu size={20} /></Button></Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-sm data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out lg:hidden" /><Dialog.Content className="fixed inset-y-0 left-0 z-50 w-[290px] overflow-y-auto bg-paper p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl outline-none data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out scrollbar-thin lg:hidden"><div className="mb-8 flex items-center justify-between"><Dialog.Title className="sr-only">Plan navigation</Dialog.Title><Logo /><Dialog.Close asChild><Button variant="ghost" size="icon" aria-label="Close navigation"><X size={19} /></Button></Dialog.Close></div>{nav(true)}<div className="mt-4 space-y-1 border-t border-line pt-4"><Link href="/new?edit=1" onClick={() => setNavOpen(false)} className="flex min-h-11 items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Pencil size={13} aria-hidden="true" /> Edit brief</Link><button onClick={() => { undo(); setNavOpen(false); }} disabled={!canUndo} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink disabled:opacity-40"><Undo2 size={13} aria-hidden="true" /> Undo last change</button><button onClick={() => { setNavOpen(false); setPlansOpen(true); }} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Files size={14} aria-hidden="true" /> Your plans</button><button onClick={() => { setNavOpen(false); window.setTimeout(startTour, 240); }} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Compass size={14} aria-hidden="true" /> Take the tour</button><Link href="/new" onClick={() => setNavOpen(false)} className="flex min-h-11 items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-ink"><Plus size={13} aria-hidden="true" /> New event plan</Link><button onClick={() => { if (window.confirm("Delete this locally saved plan? Export a backup first if you might need it.")) { resetPlan(); setNavOpen(false); } }} className="flex min-h-11 w-full items-center gap-2 rounded-2xl px-4 text-xs font-medium text-muted hover:bg-soft hover:text-red-700"><Trash2 size={13} aria-hidden="true" /> Delete plan</button></div><div className="mt-4 border-t border-line pt-4"><LanguageSwitcher label="Language" className="w-full justify-between" /></div></Dialog.Content></Dialog.Portal></Dialog.Root>
           <div className="min-w-0 flex-1"><h1 className="truncate font-display text-xl font-medium sm:text-2xl"><span className="sm:hidden">{visibleViews.find((item) => item.id === view)?.label}</span><span className="hidden sm:inline">{titles[view]}</span></h1></div>
           <Badge className="hidden border-sage/20 bg-[#e8ede6] text-sage sm:inline-flex"><span className="size-1.5 rounded-full bg-sage" />{days > 0 ? `${days} days to go` : "Event day"}</Badge>
           <Link href="/new?edit=1" className="hidden min-h-10 items-center gap-2 rounded-full px-3 text-xs font-semibold text-muted hover:bg-soft hover:text-ink md:inline-flex"><Pencil size={14} aria-hidden="true" /> Edit brief</Link>
           <LanguageSwitcher label="Language" className="hidden shrink-0 md:inline-flex lg:hidden" />
           <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo} aria-label="Undo last change" title="Undo last change" className="hidden sm:inline-flex"><Undo2 size={18} aria-hidden="true" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setPlansOpen(true)} aria-label="Your plans" title="Your plans"><Files size={18} aria-hidden="true" /></Button>
           <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="Help and tours" title="Help and tours"><CircleHelp size={18} aria-hidden="true" /></Button>
           <Button variant="ghost" size="icon" onClick={() => setExportOpen(true)} data-tour="export" aria-label="Export plan" title="Export plan"><Download size={18} /></Button>
           <Button data-testid="open-assistant-mobile" data-tour="assistant-mobile" size="sm" className="lg:hidden" onClick={() => setAssistantOpen(true)} aria-label="Ask Eventas"><Bot size={17} /></Button>
@@ -155,15 +162,18 @@ export function Dashboard() {
           {view === "functions" && <FunctionsView />}
           {view === "budget" && <BudgetView />}
           {view === "timeline" && <TimelineView />}
+          {view === "guests" && <GuestsView />}
+          {view === "run-sheet" && <RunSheetView />}
           {view === "vendors" && <VendorsView />}
           {view === "ideas" && <IdeasView />}
         </div>
-        <footer className="mt-12 flex flex-col gap-2 border-t border-line pt-5 text-[11px] text-muted sm:flex-row sm:justify-between"><p>Eventas estimates support planning; they are not vendor quotes.</p><button className="min-h-8 text-left underline decoration-line underline-offset-4 hover:text-ink" onClick={() => { if (window.confirm("Delete this locally saved plan and start over?")) resetPlan(); }}>Delete plan & start over</button></footer>
+        <footer className="mt-12 flex flex-col gap-2 border-t border-line pt-5 text-[11px] text-muted sm:flex-row sm:justify-between"><p>Eventas estimates support planning; they are not vendor quotes.</p><button className="min-h-8 text-left underline decoration-line underline-offset-4 hover:text-ink" onClick={() => { if (window.confirm("Delete this locally saved plan? Export a backup first if you might need it.")) resetPlan(); }}>Delete this plan</button></footer>
       </main>
     </div>
     <Assistant open={assistantOpen} onOpenChange={setAssistantOpen} />
     <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} onStartTour={startTour} onResetTours={resetTourHints} onOpenAssistant={() => setAssistantOpen(true)} />
     <ExportDialog plan={plan} open={exportOpen} onOpenChange={setExportOpen} />
+    <PlanSwitcher open={plansOpen} onOpenChange={setPlansOpen} />
     {tourOpen && <GuidedTour view={view} onViewChange={setView} onClose={skipTour} onFinish={completeTour} onDismiss={dismissTour} onOpenAssistant={openAssistantFromTour} />}
   </div>;
 }

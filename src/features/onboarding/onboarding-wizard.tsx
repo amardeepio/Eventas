@@ -43,7 +43,7 @@ function initialBrief(type: EventType = "wedding"): Brief {
 export function OnboardingWizard() {
   const router = useRouter();
   const params = useSearchParams();
-  const { plan, createPlan, enrichWithAi } = usePlan();
+  const { plan, createPlan, updateBrief, enrichWithAi } = usePlan();
   const isEdit = params.get("edit") === "1" && Boolean(plan);
   const requestedType = params.get("type");
   const validType = EVENT_TYPES.includes(requestedType as EventType) ? requestedType as EventType : "wedding";
@@ -175,9 +175,9 @@ export function OnboardingWizard() {
   function submit() {
     if (!validate(4)) return;
     setCreating(true);
-    const created = createPlan(brief);
+    const saved = isEdit ? updateBrief(brief) : createPlan(brief);
     localStorage.removeItem("eventas.draft.v2");
-    void enrichWithAi(created);
+    if (saved) void enrichWithAi(saved);
     router.push("/plan");
   }
 
@@ -194,7 +194,7 @@ export function OnboardingWizard() {
           <p className="mt-3 text-xs font-semibold text-muted sm:hidden">Step {step + 1} of 5 · {steps[step]}</p>
         </nav>
 
-        {isEdit && <div className="mb-6 rounded-2xl border border-clay/20 bg-blush/60 p-4 text-sm leading-6 text-ink"><strong>Editing your brief.</strong> Rebuilding will refresh the budget and timeline; manual task, vendor, and idea edits will reset.</div>}
+        {isEdit && <div className="mb-6 rounded-2xl border border-clay/20 bg-blush/60 p-4 text-sm leading-6 text-ink"><strong>Editing your brief.</strong> Budget recommendations and generated tasks refresh, but your edited tasks, vendor details, custom lines, guests, and run sheet are kept.</div>}
         {Object.keys(errors).length > 0 && <div ref={errorRef} tabIndex={-1} role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 outline-none"><strong>A few details need attention.</strong> Check the highlighted fields below.</div>}
 
         <section aria-labelledby="step-title" className="animate-rise" key={step}>

@@ -24,7 +24,7 @@ describe("brief validation", () => {
   it("round-trips a complete plan through persistence validation", () => {
     const plan = buildPlan(getSampleBrief("birthday"));
     expect(planSchema.safeParse(plan).success).toBe(true);
-    expect(planSchema.safeParse({ ...plan, version: 3 }).success).toBe(false);
+    expect(planSchema.safeParse({ ...plan, version: 4 }).success).toBe(false);
   });
 
   it("caps assistant history", () => {
@@ -34,9 +34,9 @@ describe("brief validation", () => {
     expect(assistantRequestSchema.safeParse({ plan, messages: [{ role: "system", content: "hi" }] }).success).toBe(false);
   });
 
-  it("accepts multi-day functions and a muhurat in a v2 plan", () => {
+  it("accepts multi-day functions and a muhurat in a v3 plan", () => {
     const plan = buildPlan(getSampleBrief("wedding"));
-    expect(plan.version).toBe(2);
+    expect(plan.version).toBe(3);
     expect(plan.functions.length).toBeGreaterThan(1);
     expect(plan.brief.functions).toHaveLength(plan.functions.length);
     expect(plan.brief.tradition).toBe("north-hindu");

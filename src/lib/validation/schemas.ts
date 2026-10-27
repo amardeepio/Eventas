@@ -21,6 +21,7 @@ export const muhuratSchema = z.object({
 }).strict();
 
 export const functionDraftSchema = z.object({
+  id: z.string().trim().min(1).max(80).optional(),
   kind: z.enum(FUNCTION_KINDS),
   name: z.string().trim().min(1).max(80),
   date: isoDate,
@@ -51,26 +52,73 @@ export const briefSchema = z.object({
 });
 
 const budgetCategorySchema = z.object({
-  id: z.string(), name: z.string(), recommended: z.number().nonnegative(),
+  id: z.string(), name: z.string().min(1).max(80), recommended: z.number().nonnegative(),
   planned: z.number().nonnegative(), actual: z.number().nonnegative(),
-  color: z.string(), description: z.string(), perGuest: z.boolean(),
+  color: z.string(), description: z.string().max(500), perGuest: z.boolean(),
   scaling: z.enum(["linear", "sublinear", "fixed"]).default("fixed"),
+  source: z.enum(["generated", "custom"]).default("generated"),
+  plannedEdited: z.boolean().default(false),
 });
 const taskSchema = z.object({
-  id: z.string(), title: z.string(), description: z.string(), dueDate: z.string(),
-  phase: z.string(), owner: z.string(), status: z.enum(["todo", "doing", "done"]),
+  id: z.string(), title: z.string().min(1).max(160), description: z.string().max(1200), dueDate: isoDate,
+  phase: z.string().min(1).max(80), owner: z.string().max(80), status: z.enum(["todo", "doing", "done"]),
   priority: z.enum(["high", "normal"]),
   functionId: z.string().optional(),
+  source: z.enum(["generated", "custom"]).default("generated"),
+  edited: z.boolean().default(false),
 });
 const vendorSchema = z.object({
-  id: z.string(), category: z.string(), budgetCategoryId: z.string(),
+  id: z.string(), category: z.string().min(1).max(80), budgetCategoryId: z.string(),
   status: z.enum(["idea", "shortlisted", "contacted", "booked"]),
   quote: z.number().nonnegative(), notes: z.string().max(2000),
-  questions: z.array(z.string()), redFlags: z.array(z.string()),
+  questions: z.array(z.string().max(300)).max(20), redFlags: z.array(z.string().max(300)).max(20),
+  source: z.enum(["generated", "custom"]).default("generated"),
+  edited: z.boolean().default(false),
 });
 const ideaSchema = z.object({
   id: z.string(), kind: z.string(), title: z.string(), description: z.string(),
   cost: z.number().nonnegative(), tags: z.array(z.string()), saved: z.boolean(),
+});
+const guestInviteSchema = z.object({
+  functionId: z.string().min(1).max(80),
+  status: z.enum(["pending", "yes", "no", "maybe"]),
+  seats: z.number().int().min(0).max(50),
+});
+const guestSchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().trim().min(1).max(100),
+  side: z.enum(["bride", "groom", "both"]),
+  relationship: z.string().trim().max(80),
+  phone: z.string().trim().max(40),
+  email: z.string().trim().max(160),
+  city: z.string().trim().max(80),
+  dietary: z.array(z.string().trim().max(40)).max(10),
+  notes: z.string().trim().max(1000),
+  invites: z.array(guestInviteSchema).max(12),
+  travel: z.object({
+    arriving: z.string().max(10),
+    departing: z.string().max(10),
+    needsPickup: z.boolean(),
+    needsHotel: z.boolean(),
+    roomPreference: z.string().trim().max(80),
+  }),
+});
+const runSheetEntrySchema = z.object({
+  id: z.string().min(1).max(80),
+  functionId: z.string().max(80).optional(),
+  startTime: z.string().regex(/^$|^\d{2}:\d{2}$/),
+  endTime: z.string().regex(/^$|^\d{2}:\d{2}$/),
+  title: z.string().trim().min(1).max(160),
+  owner: z.string().trim().max(80),
+  location: z.string().trim().max(120),
+  contact: z.string().trim().max(120),
+  notes: z.string().trim().max(1000),
+  source: z.enum(["generated", "custom"]),
+});
+const rsvpShareSchema = z.object({
+  hostKey: z.string().min(16).max(200),
+  publishedAt: z.string().max(40),
+  expiresAt: isoDate,
 });
 const weddingFunctionSchema = functionDraftSchema.extend({
   id: z.string(),
@@ -79,13 +127,39 @@ const weddingFunctionSchema = functionDraftSchema.extend({
 }).strict();
 
 export const planSchema = z.object({
-  version: z.literal(2), id: z.string(), createdAt: z.string(), brief: briefSchema,
+  version: z.literal(3), id: z.string(), createdAt: z.string(),
+  archivedAt: z.string().nullable().default(null),
+  brief: briefSchema,
   functions: z.array(weddingFunctionSchema).max(12),
   muhurat: muhuratSchema.nullable(),
-  budget: z.array(budgetCategorySchema).max(40), timeline: z.array(taskSchema).max(160),
-  vendors: z.array(vendorSchema).max(40), ideas: z.array(ideaSchema).max(30),
+  budget: z.array(budgetCategorySchema).max(60), timeline: z.array(taskSchema).max(250),
+  vendors: z.array(vendorSchema).max(60), guests: z.array(guestSchema).max(2000).default([]),
+  runSheet: z.array(runSheetEntrySchema).max(120).default([]),
+  dismissedTaskIds: z.array(z.string()).max(250).default([]),
+  dismissedVendorIds: z.array(z.string()).max(60).default([]),
+  ideas: z.array(ideaSchema).max(30),
   ai: z.object({ headline: z.string(), insights: z.array(z.string()), mode: z.enum(["live", "demo"]) }),
+  rsvpShare: rsvpShareSchema.nullable().default(null),
 });
+
+export const workspaceSchema = z.object({
+  version: z.literal(1),
+  activePlanId: z.string().nullable(),
+  plans: z.array(planSchema).max(30),
+}).strict();
+
+export const revisionsSchema = z.record(z.string(), z.array(planSchema).max(20)).default({});
+
+export const backupSchema = z.object({
+  app: z.literal("eventas"),
+  kind: z.literal("backup"),
+  version: z.literal(1),
+  exportedAt: z.string(),
+  workspace: workspaceSchema,
+}).strict();
+
+export type Workspace = z.infer<typeof workspaceSchema>;
+export type PlanBackup = z.infer<typeof backupSchema>;
 
 export const ideaOutputSchema = z.object({
   kind: z.string().max(30).default("Concept"),
@@ -166,6 +240,47 @@ export const weddingDraftRequestSchema = z.object({
   current: briefSchema.partial().optional(),
   language: languageSchema,
 });
+
+export const rsvpFunctionSchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().trim().min(1).max(80),
+  date: isoDate,
+  startTime: z.string().max(10),
+  endTime: z.string().max(10),
+  venue: z.string().trim().max(120),
+}).strict();
+
+export const rsvpGuestSchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().trim().min(1).max(100),
+  functionIds: z.array(z.string().min(1).max(80)).max(12),
+}).strict();
+
+export const rsvpPublishSchema = z.object({
+  planId: z.string().trim().min(8).max(80).regex(/^[a-zA-Z0-9-]+$/),
+  title: z.string().trim().min(2).max(100),
+  hostName: z.string().trim().max(100),
+  eventDate: isoDate,
+  functions: z.array(rsvpFunctionSchema).min(1).max(12),
+  guests: z.array(rsvpGuestSchema).max(2000),
+  expiresAt: isoDate.optional(),
+  hostKey: z.string().max(200).optional(),
+}).strict();
+
+export const rsvpSubmitSchema = z.object({
+  invites: z.array(z.object({
+    functionId: z.string().min(1).max(80),
+    status: z.enum(["pending", "yes", "no", "maybe"]),
+    seats: z.number().int().min(0).max(50),
+  }).strict()).max(12),
+  dietary: z.array(z.string().trim().max(40)).max(10),
+  notes: z.string().trim().max(500),
+}).strict();
+
+export const rsvpHostRequestSchema = z.object({
+  planId: z.string().trim().min(8).max(80),
+  hostKey: z.string().min(16).max(200),
+}).strict();
 
 export const draftMessageRequestSchema = z.object({
   plan: planSchema,

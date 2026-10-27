@@ -86,6 +86,8 @@ export function allocateBudget(pack: DomainPack, brief: Brief): BudgetCategory[]
       description: category.description,
       perGuest: scaling !== "fixed",
       scaling,
+      source: "generated",
+      plannedEdited: false,
     };
   });
 }

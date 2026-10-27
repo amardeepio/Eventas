@@ -35,6 +35,8 @@ export function generateTimeline(
         status: "todo" as const,
         priority: task.priority ?? (target < today ? "high" as const : "normal" as const),
         functionId: anchor?.id,
+        source: "generated" as const,
+        edited: false,
       };
     });
   });

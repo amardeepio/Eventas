@@ -24,7 +24,14 @@ export class RateLimiter {
 
 // Route bundles can be evaluated separately; a global keeps one shared budget per instance.
 const globalLimits = globalThis as typeof globalThis & {
-  __eventasRateLimiters?: { minute: RateLimiter; day: RateLimiter; translateMinute: RateLimiter; translateDay: RateLimiter };
+  __eventasRateLimiters?: {
+    minute: RateLimiter;
+    day: RateLimiter;
+    translateMinute: RateLimiter;
+    translateDay: RateLimiter;
+    rsvpMinute: RateLimiter;
+    rsvpDay: RateLimiter;
+  };
 };
 globalLimits.__eventasRateLimiters ??= {
   minute: new RateLimiter(12, 60_000),
@@ -32,9 +39,14 @@ globalLimits.__eventasRateLimiters ??= {
   // A single page view needs a handful of batched translation calls.
   translateMinute: new RateLimiter(90, 60_000),
   translateDay: new RateLimiter(6_000, 86_400_000),
+  // Public RSVP links are cheap but must not become a spam target.
+  rsvpMinute: new RateLimiter(40, 60_000),
+  rsvpDay: new RateLimiter(1_000, 86_400_000),
 };
 
 export const aiRateLimiter = globalLimits.__eventasRateLimiters.minute;
 export const dailyAiLimiter = globalLimits.__eventasRateLimiters.day;
 export const translateRateLimiter = globalLimits.__eventasRateLimiters.translateMinute;
 export const translateDailyLimiter = globalLimits.__eventasRateLimiters.translateDay;
+export const rsvpMinuteLimiter = globalLimits.__eventasRateLimiters.rsvpMinute;
+export const rsvpDayLimiter = globalLimits.__eventasRateLimiters.rsvpDay;

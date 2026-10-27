@@ -38,9 +38,13 @@ export type VendorStatus = "idea" | "shortlisted" | "contacted" | "booked";
 export type FunctionStatus = "planned" | "booked" | "done";
 export type HostSide = "bride" | "groom" | "both";
 export type BudgetScaling = "linear" | "sublinear" | "fixed";
+export type ItemSource = "generated" | "custom";
+export type RsvpStatus = "pending" | "yes" | "no" | "maybe";
 
 /** A function as the host describes it in the brief. */
 export interface FunctionDraft {
+  /** Persisted so guest invites and run-sheet rows survive brief edits. */
+  id?: string;
   kind: FunctionKind;
   name: string;
   date: string;
@@ -65,6 +69,53 @@ export interface MuhuratWindow {
   end: string;
   label: string;
   source: string;
+}
+
+export interface GuestInvite {
+  functionId: string;
+  status: RsvpStatus;
+  seats: number;
+}
+
+export interface GuestTravel {
+  arriving: string;
+  departing: string;
+  needsPickup: boolean;
+  needsHotel: boolean;
+  roomPreference: string;
+}
+
+export interface Guest {
+  id: string;
+  name: string;
+  side: HostSide;
+  relationship: string;
+  phone: string;
+  email: string;
+  city: string;
+  dietary: string[];
+  notes: string;
+  invites: GuestInvite[];
+  travel: GuestTravel;
+}
+
+export interface RunSheetEntry {
+  id: string;
+  functionId?: string;
+  startTime: string;
+  endTime: string;
+  title: string;
+  owner: string;
+  location: string;
+  contact: string;
+  notes: string;
+  source: ItemSource;
+}
+
+export interface RsvpShare {
+  hostKey: string;
+  publishedAt: string;
+  expiresAt: string;
 }
 
 export interface Brief {
@@ -95,6 +146,8 @@ export interface BudgetCategory {
   description: string;
   perGuest: boolean;
   scaling: BudgetScaling;
+  source: ItemSource;
+  plannedEdited: boolean;
 }
 
 export interface Task {
@@ -107,6 +160,8 @@ export interface Task {
   status: TaskStatus;
   priority: "high" | "normal";
   functionId?: string;
+  source: ItemSource;
+  edited: boolean;
 }
 
 export interface Vendor {
@@ -118,6 +173,8 @@ export interface Vendor {
   notes: string;
   questions: string[];
   redFlags: string[];
+  source: ItemSource;
+  edited: boolean;
 }
 
 export interface Idea {
@@ -137,17 +194,23 @@ export interface AiEnrichment {
 }
 
 export interface Plan {
-  version: 2;
+  version: 3;
   id: string;
   createdAt: string;
+  archivedAt: string | null;
   brief: Brief;
   functions: WeddingFunction[];
   muhurat: MuhuratWindow | null;
   budget: BudgetCategory[];
   timeline: Task[];
   vendors: Vendor[];
+  guests: Guest[];
+  runSheet: RunSheetEntry[];
+  dismissedTaskIds: string[];
+  dismissedVendorIds: string[];
   ideas: Idea[];
   ai: AiEnrichment;
+  rsvpShare: RsvpShare | null;
 }
 
 export interface BudgetWeight {

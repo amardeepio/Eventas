@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { downloadPlan, planToBudgetCsv, planToCalendar, planToMarkdown, planToTimelineCsv } from "./export-plan";
+import { downloadPlan, planToBudgetCsv, planToCalendar, planToGuestCsv, planToMarkdown, planToRunSheetCsv, planToTimelineCsv } from "./export-plan";
+import { makeGuest } from "../domain/guests";
 import { buildPlan } from "../domain/engine/plan";
 import { getSampleBrief } from "../domain/packs";
 import { formatDate, formatMoney, daysUntil, clamp } from "./format";
@@ -43,6 +44,8 @@ describe("plan export", () => {
     expect(calendar).toContain("SUMMARY:Mehndi");
     expect(calendar).toContain("SUMMARY:Muhurat · Vivah");
     expect(calendar).toContain("DTSTART:20261121T064800");
+    expect(calendar).toContain("BEGIN:VALARM");
+    expect(calendar).toContain("TRIGGER:-P7D");
     expect(calendar).toContain("END:VCALENDAR");
   });
 
@@ -54,6 +57,20 @@ describe("plan export", () => {
     const timeline = planToTimelineCsv(plan);
     expect(timeline.split("\r\n")[0]).toBe("Task,Phase,Due date,Status,Priority,Function");
     expect(timeline).toContain("Define purpose, audience, and success");
+  });
+
+  it("exports the guest list and run sheet", () => {
+    const plan = buildPlan(getSampleBrief("wedding", new Date("2026-10-24")));
+    const guest = makeGuest("Asha, Rao", plan.functions.map((item) => item.id));
+    guest.invites[0] = { ...guest.invites[0]!, status: "yes", seats: 2 };
+    const withGuest = { ...plan, guests: [guest] };
+    const guests = planToGuestCsv(withGuest);
+    expect(guests.split("\r\n")[0]).toContain("Name,Side");
+    expect(guests).toContain('"Asha, Rao"');
+    expect(guests).toContain("Attending (2)");
+    const runSheet = planToRunSheetCsv(plan);
+    expect(runSheet.split("\r\n")[0]).toBe("Function,Start,End,Item,Owner,Location,Contact,Notes");
+    expect(runSheet).toContain("Vendor setup and final walkthrough");
   });
 
   it("opens the print-ready view for PDF export", () => {

@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All RSVP reads and writes go through the Cloud Run Admin SDK.
+    // No client SDK is shipped, so deny every direct browser access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

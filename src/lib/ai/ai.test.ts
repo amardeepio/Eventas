@@ -119,7 +119,7 @@ describe("multilingual prompts", () => {
 
 describe("landing guide", () => {
   it.each([
-    ["How is my data saved?", /localStorage/i],
+    ["How is my data saved?", /IndexedDB/i],
     ["How is the budget calculated?", /INR|contingency/i],
     ["Which events can I plan?", /weddings/i],
     ["How does the AI work?", /Groq/i],

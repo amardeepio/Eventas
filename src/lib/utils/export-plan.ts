@@ -1,6 +1,8 @@
 import type { Plan } from "../domain/types";
 import { addDays, formatDate, formatMoney, toISODate } from "./format";
 import { formatMuhuratTime } from "../domain/muhurat";
+import { GUEST_CSV_HEADER, guestToCsvRow } from "../domain/guests";
+import { serializeCsv } from "./csv";
 
 function escapeIcs(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
@@ -57,6 +59,11 @@ export function planToCalendar(plan: Plan): string {
       `SUMMARY:${escapeIcs(fn.name)}`,
       `LOCATION:${escapeIcs(fn.venue || plan.brief.location)}`,
       `DESCRIPTION:${escapeIcs(`${fn.guestCount} guests · ${formatMoney(fn.budget)} target${fn.startTime ? ` · ${fn.startTime}–${fn.endTime}` : ""}`)}`,
+      "BEGIN:VALARM",
+      "TRIGGER:-P7D",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:${escapeIcs(`One week to ${fn.name}. Reconfirm vendors, guest count, and travel.`)}`,
+      "END:VALARM",
       "END:VEVENT",
     );
   }
@@ -70,6 +77,11 @@ export function planToCalendar(plan: Plan): string {
       `DTEND:${icsDateTime(plan.muhurat.date, plan.muhurat.end)}`,
       `SUMMARY:${escapeIcs(`Muhurat · ${plan.muhurat.label}`)}`,
       `DESCRIPTION:${escapeIcs(`${formatMuhuratTime(plan.muhurat)}. ${plan.muhurat.source}. Confirm with your pandit.`)}`,
+      "BEGIN:VALARM",
+      "TRIGGER:-PT3H",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:Confirm the muhurat window with your pandit and family.",
+      "END:VALARM",
       "END:VEVENT",
     );
   }
@@ -86,6 +98,11 @@ export function planToCalendar(plan: Plan): string {
       `SUMMARY:${escapeIcs(task.title)}`,
       `DESCRIPTION:${escapeIcs(`${task.phase}${functionName ? ` · ${functionName}` : ""} · ${task.priority} priority`)}`,
       "TRANSP:TRANSPARENT",
+      "BEGIN:VALARM",
+      "TRIGGER:-P1D",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:${escapeIcs(`Due tomorrow: ${task.title}`)}`,
+      "END:VALARM",
       "END:VEVENT",
     );
   }
@@ -125,6 +142,28 @@ export function downloadBudgetCsv(plan: Plan): void {
 
 export function downloadTimelineCsv(plan: Plan): void {
   downloadText(`${slug(plan)}-timeline.csv`, planToTimelineCsv(plan), "text/csv;charset=utf-8");
+}
+
+export function planToGuestCsv(plan: Plan): string {
+  return serializeCsv([GUEST_CSV_HEADER, ...plan.guests.map((guest) => guestToCsvRow(plan, guest))]);
+}
+
+export function downloadGuestCsv(plan: Plan): void {
+  downloadText(`${slug(plan)}-guests.csv`, planToGuestCsv(plan), "text/csv;charset=utf-8");
+}
+
+export function planToRunSheetCsv(plan: Plan): string {
+  return serializeCsv([
+    ["Function", "Start", "End", "Item", "Owner", "Location", "Contact", "Notes"],
+    ...plan.runSheet.map((item) => [
+      plan.functions.find((fn) => fn.id === item.functionId)?.name ?? "Whole event",
+      item.startTime, item.endTime, item.title, item.owner, item.location, item.contact, item.notes,
+    ]),
+  ]);
+}
+
+export function downloadRunSheetCsv(plan: Plan): void {
+  downloadText(`${slug(plan)}-run-sheet.csv`, planToRunSheetCsv(plan), "text/csv;charset=utf-8");
 }
 
 

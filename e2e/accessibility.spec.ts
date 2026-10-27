@@ -53,3 +53,14 @@ test("the functions view has no serious accessibility violations", async ({ page
   await page.waitForTimeout(700);
   expect(await seriousViolations(page)).toEqual([]);
 });
+
+test("guests and the run sheet have no serious accessibility violations", async ({ page }) => {
+  await page.goto("/new?sample=wedding");
+  await expect(page).toHaveURL(/\/plan/, { timeout: 15_000 });
+  await page.getByRole("button", { name: "Guests", exact: true }).first().click();
+  await page.waitForTimeout(500);
+  expect(await seriousViolations(page)).toEqual([]);
+  await page.getByRole("button", { name: "Run sheet", exact: true }).first().click();
+  await page.waitForTimeout(500);
+  expect(await seriousViolations(page)).toEqual([]);
+});

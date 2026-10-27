@@ -10,5 +10,7 @@ export function buildVendorChecklist(pack: DomainPack): Vendor[] {
     notes: "",
     questions: [...vendor.questions],
     redFlags: [...vendor.redFlags],
+    source: "generated",
+    edited: false,
   }));
 }

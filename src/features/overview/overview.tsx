@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Bot, CalendarDays, CalendarRange, Circle, Clock3, Lightbulb, Sparkles, Store, Users } from "lucide-react";
+import { ArrowRight, BellRing, Bot, CalendarDays, CalendarRange, Circle, Clock3, Lightbulb, Sparkles, Store, Users } from "lucide-react";
 import { Card, Eyebrow, Badge } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProgressRing } from "@/components/ui/progress-ring";
@@ -9,6 +9,7 @@ import { getPack } from "@/lib/domain/packs";
 import { getBudgetTotals } from "@/lib/domain/engine/budget";
 import { getNextTasks } from "@/lib/domain/engine/plan";
 import { auditPlan } from "@/lib/domain/engine/audit";
+import { getWeeklyDigest } from "@/lib/domain/reminders";
 import { formatMuhuratTime } from "@/lib/domain/muhurat";
 import { daysUntil, formatDate, formatMoney } from "@/lib/utils/format";
 
@@ -29,6 +30,7 @@ export function Overview({ onNavigate, onOpenAssistant }: OverviewProps) {
   const allocationPercent = Math.min(100, totals.planned / Math.max(1, plan.brief.budget) * 100);
   const nextFunction = [...plan.functions].filter((item) => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date))[0];
   const audit = auditPlan(plan);
+  const digest = getWeeklyDigest(plan);
 
   return <div className="space-y-6">
     <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -54,6 +56,12 @@ export function Overview({ onNavigate, onOpenAssistant }: OverviewProps) {
         <div className="min-w-0"><Eyebrow>Budget health</Eyebrow><h3 className="mt-2 font-display text-2xl font-medium">{totals.planned > plan.brief.budget ? "Needs a rebalance" : "Room to breathe"}</h3><dl className="mt-4 space-y-2 text-xs"><div className="flex justify-between gap-4"><dt className="text-muted">Total budget</dt><dd className="font-semibold">{formatMoney(plan.brief.budget)}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted">Still unallocated</dt><dd className="font-semibold text-sage">{formatMoney(Math.max(0, plan.brief.budget - totals.planned))}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted">Actual spend</dt><dd className="font-semibold">{formatMoney(totals.actual)}</dd></div></dl><button onClick={() => onNavigate("budget")} className="mt-4 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-clay">Open budget <ArrowRight size={13} /></button></div>
       </Card>
     </section>
+
+    <Card className="flex flex-wrap items-center gap-4 p-5 sm:px-7" aria-label="This week's reminders">
+      <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ${digest.overdue.length > 0 ? "bg-red-50 text-red-700" : "bg-blush text-clay"}`}><BellRing size={19} aria-hidden="true" /></span>
+      <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{digest.overdue.length > 0 ? "Some things need you now." : "This week"}</p><p className="mt-1 text-xs leading-5 text-muted">{digest.message}</p>{digest.top.length > 0 && <p className="mt-1 truncate text-[11px] text-muted">{digest.top.map((task) => task.title).join(" · ")}</p>}</div>
+      <Button variant="ghost" size="sm" onClick={() => onNavigate("timeline")}>Open timeline <ArrowRight size={13} /></Button>
+    </Card>
 
     <section aria-labelledby="next-moves" className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
       <Card className="p-6 sm:p-8" data-tour="next-moves">

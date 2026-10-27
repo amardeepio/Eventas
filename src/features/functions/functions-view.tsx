@@ -88,7 +88,7 @@ export function FunctionsView() {
     updatePlan((current) => {
       const added = {
         ...draft,
-        id: `${draft.kind}-${current.functions.length + 1}`,
+        id: globalThis.crypto?.randomUUID?.() ?? `${draft.kind}-${current.functions.length + 1}`,
         budget: 0,
         status: "planned" as const,
       };

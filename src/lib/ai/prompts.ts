@@ -1,5 +1,6 @@
 import type { Brief, Plan, Vendor } from "../domain/types";
 import { getBudgetTotals } from "../domain/engine/budget";
+import { getGuestSummary } from "../domain/guests";
 import { getNextTasks } from "../domain/engine/plan";
 import { auditPlan } from "../domain/engine/audit";
 import { getPack } from "../domain/packs";
@@ -56,6 +57,7 @@ export function compactPlanContext(plan: Plan): string {
     nextTasks: getNextTasks(plan).map(({ title, dueDate, phase }) => ({ title, dueDate, phase })),
     upcomingTasks: plan.timeline.filter((task) => task.status !== "done").slice(0, 10).map(({ title, dueDate }) => ({ title, dueDate })),
     vendors: plan.vendors.map(({ category, status, quote }) => ({ category, status, quote })),
+    guests: getGuestSummary(plan),
     savedIdeas: plan.ideas.filter((idea) => idea.saved).map(({ title, description }) => ({ title, description })),
     audit: { gaps: audit.gaps.map((item) => item.title), warnings: audit.warnings.map((item) => item.title) },
   };

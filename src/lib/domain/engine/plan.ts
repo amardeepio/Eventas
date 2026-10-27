@@ -4,8 +4,9 @@ import { allocateBudget } from "./budget";
 import { generateTimeline } from "./timeline";
 import { buildVendorChecklist } from "./vendors";
 import { daysUntil, formatDate, formatMoney } from "@/lib/utils/format";
-import { resolveFunctions } from "../functions";
+import { resolveFunctions, toFunctionDraft } from "../functions";
 import { traditionUsesMuhurat } from "../muhurat";
+import { generateRunSheet } from "../run-sheet";
 
 export function buildIdeas(brief: Brief): Idea[] {
   const pack = getPack(brief.eventType);
@@ -51,17 +52,23 @@ export function buildPlan(brief: Brief, now = new Date()): Plan {
   const pack = getPack(brief.eventType);
   const functions = resolveFunctions(brief);
   return {
-    version: 2,
+    version: 3,
     id: globalThis.crypto?.randomUUID?.() ?? `plan-${Date.now()}`,
     createdAt: now.toISOString(),
-    brief,
+    archivedAt: null,
+    brief: { ...brief, functions: functions.map(toFunctionDraft) },
     functions,
     muhurat: brief.muhurat ?? null,
     budget: allocateBudget(pack, brief),
     timeline: generateTimeline(pack, brief, now, functions),
     vendors: buildVendorChecklist(pack),
+    guests: [],
+    runSheet: generateRunSheet(functions, brief.location),
+    dismissedTaskIds: [],
+    dismissedVendorIds: [],
     ideas: buildIdeas(brief),
     ai: createDefaultAi(brief, now, functions),
+    rsvpShare: null,
   };
 }
 

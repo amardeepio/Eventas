@@ -5,6 +5,8 @@ import { PlanProvider } from "@/lib/storage/plan-store";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { DocumentTranslator } from "@/lib/i18n/document-translator";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { OfflineSupport } from "@/components/pwa/offline-support";
+import { StorageWarning } from "@/components/pwa/storage-warning";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
@@ -48,7 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${fraunces.variable}`}>
     <body>
       <a href="#main-content" className="fixed top-3 left-3 z-[100] -translate-y-20 rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition focus:translate-y-0">Skip to content</a>
-      <LanguageProvider><PlanProvider><DocumentTranslator /><PullToRefresh />{children}</PlanProvider></LanguageProvider>
+      <LanguageProvider><PlanProvider><DocumentTranslator /><PullToRefresh />{children}<StorageWarning /><OfflineSupport /></PlanProvider></LanguageProvider>
     </body>
   </html>;
 }

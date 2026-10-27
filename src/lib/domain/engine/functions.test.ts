@@ -39,7 +39,7 @@ describe("multi-event functions", () => {
 
   it("round-trips plan functions back to brief drafts", () => {
     const drafts = resolveFunctions(brief).map(toFunctionDraft);
-    expect(drafts[0]).not.toHaveProperty("id");
+    expect(drafts[0]).toHaveProperty("id");
     expect(drafts[0]).not.toHaveProperty("budget");
     expect(drafts[0]).not.toHaveProperty("status");
   });

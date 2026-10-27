@@ -108,6 +108,64 @@ test("a host can edit the brief and rebuild the plan", async ({ page }) => {
   await expect(page.getByText("90 guests").first()).toBeVisible();
 });
 
+test("a host can own the plan: edit a task, add a vendor, a budget line, and a guest", async ({ page }) => {
+  await page.goto("/new?sample=wedding");
+  await expect(page).toHaveURL(/\/plan/, { timeout: 20_000 });
+  await expect(page.getByText("Maya & Dev’s wedding").first()).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("button", { name: /^Timeline/ }).first().click();
+  await page.getByRole("button", { name: "Edit Agree the non-negotiables" }).click();
+  await page.getByLabel("Task", { exact: true }).fill("Our revised first move");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Our revised first move")).toBeVisible();
+
+  await page.getByRole("button", { name: "Vendors", exact: true }).first().click();
+  await page.getByRole("button", { name: "Add a vendor" }).click();
+  await page.getByPlaceholder("Mehndi by Asha").fill("Our family decorator");
+  await page.getByLabel("Budget home").selectOption({ label: "Decor, flowers & lighting" });
+  await page.getByRole("button", { name: "Add vendor" }).click();
+  await expect(page.getByRole("heading", { name: "Our family decorator" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Budget", exact: true }).first().click();
+  await page.getByRole("button", { name: "Add custom line" }).click();
+  await page.getByLabel("Line name").fill("Baraat horses");
+  await page.getByLabel("Planned amount", { exact: true }).fill("25000");
+  await page.getByRole("button", { name: "Add line" }).click();
+  await expect(page.getByText("Baraat horses")).toBeVisible();
+
+  await page.getByRole("button", { name: "Guests", exact: true }).first().click();
+  await page.getByRole("button", { name: "Add guest" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Asha Rao");
+  await page.getByRole("button", { name: "Add guest" }).last().click();
+  await expect(page.getByRole("heading", { name: "Asha Rao" })).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: "Guests", exact: true }).first().click();
+  await expect(page.getByRole("heading", { name: "Asha Rao" })).toBeVisible();
+});
+
+test("a host can print the run sheet and download a full backup", async ({ page }) => {
+  await page.goto("/new?sample=wedding");
+  await expect(page).toHaveURL(/\/plan/, { timeout: 20_000 });
+  await expect(page.getByText("Maya & Dev’s wedding").first()).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: "Run sheet", exact: true }).first().click();
+  await expect(page.getByRole("heading", { name: "The run sheet." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mehndi" }).first()).toBeVisible();
+
+  const popupPromise = page.waitForEvent("popup");
+  await page.getByRole("link", { name: "Print" }).click();
+  const popup = await popupPromise;
+  await expect(popup).toHaveURL(/\/plan\/run-sheet\/print/);
+  await expect(popup.getByText("Vendor setup and final walkthrough").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Export plan" }).click();
+  const dialog = page.getByRole("dialog", { name: /export plan/i });
+  const downloadPromise = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: /Full backup/ }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.eventas\.json$/);
+});
+
 test("the landing guide answers product questions and blocks prompt injection", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Ask about Eventas" }).click();

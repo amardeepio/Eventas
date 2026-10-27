@@ -76,18 +76,24 @@ export function defaultFunctionDrafts(brief: Brief): FunctionDraft[] {
  */
 export function resolveFunctions(brief: Brief): WeddingFunction[] {
   const drafts = brief.functions.length ? brief.functions : defaultFunctionDrafts(brief);
-  const safe = drafts.slice(0, 12).map((draft, index) => ({
-    ...draft,
-    id: `${draft.kind}-${index + 1}`,
-    name: draft.name.trim() || functionKindLabel(draft.kind),
-    date: /^\d{4}-\d{2}-\d{2}$/.test(draft.date) ? draft.date : brief.date,
-    startTime: draft.startTime || META[draft.kind].start,
-    endTime: draft.endTime || META[draft.kind].end,
-    venue: draft.venue || brief.location,
-    guestCount: Math.max(1, Math.round(draft.guestCount || brief.guests * META[draft.kind].guestShare)),
-    status: "planned" as const,
-    budget: 0,
-  }));
+  const usedIds = new Set<string>();
+  const safe = drafts.slice(0, 12).map((draft, index) => {
+    let id = draft.id?.trim() || `${draft.kind}-${index + 1}`;
+    while (usedIds.has(id)) id = `${id}-${index + 1}`;
+    usedIds.add(id);
+    return {
+      ...draft,
+      id,
+      name: draft.name.trim() || functionKindLabel(draft.kind),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(draft.date) ? draft.date : brief.date,
+      startTime: draft.startTime || META[draft.kind].start,
+      endTime: draft.endTime || META[draft.kind].end,
+      venue: draft.venue || brief.location,
+      guestCount: Math.max(1, Math.round(draft.guestCount || brief.guests * META[draft.kind].guestShare)),
+      status: "planned" as const,
+      budget: 0,
+    };
+  });
 
   if (safe.length === 0) {
     return [{
@@ -134,7 +140,6 @@ export function findFunction(functions: WeddingFunction[], id: string | undefine
 
 export function toFunctionDraft(item: WeddingFunction): FunctionDraft {
   const draft: Partial<WeddingFunction> = { ...item };
-  delete draft.id;
   delete draft.budget;
   delete draft.status;
   return draft as FunctionDraft;

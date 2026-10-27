@@ -12,7 +12,7 @@ import { getTourProgress, setTourProgress, trackTourEvent } from "./tour-storage
 
 type Translate = (source: string, vars?: Record<string, string | number>) => string;
 
-export type StudioView = "overview" | "functions" | "budget" | "timeline" | "vendors" | "ideas";
+export type StudioView = "overview" | "functions" | "budget" | "timeline" | "guests" | "run-sheet" | "vendors" | "ideas";
 
 /** Warm the translation cache before the first-run tour opens. */
 export function useWarmStudioTour(plan: Plan | null) {

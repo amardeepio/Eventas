@@ -7,7 +7,7 @@
 [![Node](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![Tests](https://img.shields.io/badge/tests-171_passing-brightgreen?logo=vitest&logoColor=white)](#testing)
 [![Coverage](https://img.shields.io/badge/coverage-87%25_statements_%7C_91%25_lines-brightgreen)](#testing)
-[![Playwright](https://img.shields.io/badge/Playwright-24_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
+[![Playwright](https://img.shields.io/badge/Playwright-23_journeys-2EAD33?logo=playwright&logoColor=white)](#testing)
 [![Accessibility](https://img.shields.io/badge/a11y-axe_WCAG_2.1_AA-4c1)](#accessibility)
 [![Local-first](https://img.shields.io/badge/data-local--first-9f4e39)](#how-data-is-saved)
 [![License](https://img.shields.io/badge/license-competition_entry-lightgrey)](#license)
@@ -70,19 +70,24 @@ Budget changes are never applied silently. The **Rebalance with AI** flow return
 A floating **Ask about Eventas** button answers questions about the product without requiring a plan: how budgeting works, the three event types, AI use, and exactly how data is stored. It is rate-limited and protected by the same prompt-injection tripwire as the planning assistant.
 
 ### 5. Local-first and instant
-No account, database, or onboarding email. A first-run guided tour walks new hosts through the brief, every view their plan actually uses, budget health, next moves, vendors, ideas, the copilot, and export. It adapts to the event type, navigates the real views, offers hands-on actions (tick a milestone, mark a vendor as contacted, open the copilot), respects reduced motion, docks as a bottom sheet on phones, and can be replayed from the sidebar or menu. A separate first-visit tour on the landing page introduces the promise, preview, event types, workflow, privacy, and the guide. The header help centre can replay either tour, reset the hints, or jump to the copilot. The active plan and draft live in `localStorage`, are schema-validated on read, and can be exported as a print-ready PDF, a calendar file with functions and milestones, or budget/timeline spreadsheets. The last change can be undone from the header. Plans can be deleted from the studio menu or footer.
+No account, subscription, or onboarding email. A first-run guided tour walks new hosts through the brief, every view their plan actually uses, budget health, next moves, vendors, guests, the run sheet, ideas, the copilot, and export. It adapts to the event type, navigates the real views, offers hands-on actions (tick a milestone, mark a vendor as contacted, open the copilot), respects reduced motion, docks as a bottom sheet on phones, and can be replayed from the sidebar or menu. A separate first-visit tour on the landing page introduces the promise, preview, event types, workflow, privacy, and the guide. The header help centre can replay either tour, reset the hints, or jump to the copilot.
+
+Plans, guests, custom vendors, custom budget lines, and the day-of run sheet live in browser **IndexedDB**, are schema-validated on read, and can be exported as a full JSON backup, a print-ready PDF, a run sheet, a calendar file with reminders, or budget/timeline/guest spreadsheets. Multiple plans can be switched, duplicated, archived, and restored. The last change is undoable across reloads. A host can optionally publish **signed guest RSVP links**; only names, function invitations, and replies go to Firestore. Everything else stays on the device.
 
 ### How data is saved
 
 | Data | Where it lives | Details |
 | --- | --- | --- |
-| Active plan | Browser `localStorage` under `eventas.plan.v2` | Brief, tradition, functions, muhurat, budget, tasks, vendors, ideas, and AI copy. Validated with Zod on every read. A valid v1 plan is migrated in place; corrupt data is discarded. |
+| Plans | Browser **IndexedDB** under `eventas.workspace.v1` | Brief, tradition, functions, muhurat, budget, custom lines, tasks, vendors, guests, run sheet, ideas, and AI copy. Validated with Zod on every read. A valid v1/v2 plan is migrated in place; corrupt data is discarded. |
+| Undo history | Browser IndexedDB under `eventas.revisions.v1` | The last ten snapshots per plan, so undo survives a reload without unbounded growth. |
 | Wizard draft | Browser `localStorage` under `eventas.draft.v2` | Partial brief, so a refresh does not lose progress. Removed after the plan is created. |
-| AI context | Sent to Groq only when AI is used | A compact snapshot of the brief, tradition, functions, muhurat, budget totals, next tasks, vendor statuses, saved ideas, and deterministic audit gaps. No account, auth token, guest list, or payment data exists. |
-| API key | Server environment only | Read from `GROQ_API_KEY`; never sent to the browser or written to the plan. |
-| Server storage | None | Eventas has no database and does not persist plans server-side. Demo mode makes no external AI call. |
+| AI context | Sent to Groq only when AI is used | A compact snapshot of the brief, tradition, functions, muhurat, budget totals, next tasks, vendor statuses, saved ideas, deterministic audit gaps, and **guest aggregates only** (headcounts and dietary counts). Guest names, phone numbers, and notes are never sent. |
+| RSVP hosting (optional) | Firestore, only when the host presses **Publish guest links** | Title, event date, function names, guest names, function invitations, and replies. The full guest list, contact details, travel, and notes stay local. Firestore rules deny all direct browser access; Cloud Run uses the Admin SDK. |
+| RSVP links | Signed HMAC tokens | Short-lived per-guest links. Rotating `RSVP_SIGNING_SECRET` invalidates them. |
+| API keys | Server environment only | Read from `GROQ_API_KEY`, `GOOGLE_TRANSLATE_API_KEY`, and `RSVP_SIGNING_SECRET`; never sent to the browser or written to a plan. |
+| Server storage | None by default | Plans work with no server database. Firestore is used only for the optional hosted RSVP. Demo mode makes no external AI call. |
 
-Deleting the plan in the studio footer removes it from `localStorage`. Clearing site data also removes it. Plans do not sync between devices or browsers.
+Deleting a plan removes it from IndexedDB; clearing site data removes every plan on that device. Export **Full backup** to move plans between devices. Hosted RSVP replies can be pulled back into the local guest list.
 
 ---
 
@@ -183,7 +188,7 @@ flowchart LR
   A3 --> A
   B --> C[Deterministic engine]
   C --> D[Multi-day baseline plan]
-  D --> E[Plan UI + localStorage v2]
+  D --> E[Plan UI + IndexedDB workspace]
   D --> F{AI configured?}
   F -- yes --> G[Groq enrichment]
   G --> H[Zod output validation]
@@ -211,12 +216,21 @@ src/
     api/ai/draft-message/route.ts  vendor enquiry draft
     api/assistant/route.ts    streaming chat
     api/health/route.ts       readiness + AI configuration flag
+    api/rsvp/                 publish, guest reply, host links, manage, revoke
+    rsvp/[token]/             public per-guest RSVP page
+    plan/print/               printable plan
+    plan/run-sheet/print/     printable day-of run sheet
+    offline/                  offline fallback page
   components/ui/              button, card, field, logo, progress ring
+  components/pwa/             service-worker registration + offline/storage banners
   features/
-    landing/ onboarding/ overview/ functions/ budget/ timeline/ vendors/ ideas/ assistant/ tour/ export/
+    landing/ onboarding/ overview/ functions/ budget/ timeline/ guests/ run-sheet/ vendors/ ideas/ assistant/ rsvp/ plans/ tour/ export/
   lib/
     domain/
-      types.ts                shared domain types (tradition, functions, muhurat)
+      types.ts                shared domain types (tradition, functions, muhurat, guests)
+      guests.ts               guest summaries, dietary counts, CSV rows
+      run-sheet.ts            generated day-of rows
+      reminders.ts            overdue / today / this-week buckets
       traditions.ts           per-tradition functions, ritual lead, food defaults
       functions.ts            multi-day function resolution + exact budget split
       muhurat.ts              curated, source-labelled muhurat table
@@ -225,8 +239,9 @@ src/
       packs/                  Indian wedding, birthday, community
       engine/                 budget, timeline, vendors, plan assembly, audit
     ai/                       Groq adapter, prompts, schemas, cache, demo fallback
+    rsvp/                     signed tokens, Firestore Admin SDK, HTTP guards
     validation/               Zod contracts
-    storage/                  versioned local persistence + v1→v2 migration
+    storage/                  IndexedDB workspace, revisions, v1→v3 migration, backup merge
     utils/                    money/date formatting, rate limits, export
   test/                       setup + test-only server boundary stub
 e2e/                          Playwright journeys + axe audit
@@ -234,7 +249,7 @@ e2e/                          Playwright journeys + axe audit
 
 ### API contracts
 
-All routes accept JSON, enforce a **250 KB body cap**, validate with Zod, reject unknown keys, and return generic errors.
+All routes accept JSON, enforce a **250 KB body cap** (500 KB for RSVP publish), validate with Zod, reject unknown keys, and return generic errors.
 
 | Route | Input | Output |
 | --- | --- | --- |
@@ -245,6 +260,12 @@ All routes accept JSON, enforce a **250 KB body cap**, validate with Zod, reject
 | `POST /api/assistant` | `{ plan, messages[1–20] }` | streamed plain text |
 | `POST /api/site-assistant` | `{ messages[1–20] }` | streamed product guidance |
 | `GET /api/health` | — | `{ ok, aiConfigured }` |
+| `POST /api/rsvp/publish` | `{ planId, title, eventDate, functions, guests, expiresAt, hostKey? }` | `{ ok, hostKey, expiresAt }` |
+| `GET /api/rsvp/[token]` | — | `{ plan, guest, response }` |
+| `POST /api/rsvp/[token]` | `{ invites, dietary, notes }` | `{ ok }` |
+| `GET /api/rsvp/manage?planId=` | `x-eventas-host-key` header | `{ responses }` |
+| `POST /api/rsvp/links` | `{ planId, hostKey }` | `{ links }` |
+| `POST /api/rsvp/revoke` | `{ planId, hostKey }` | `{ ok }` |
 
 The client validates every AI response again before merging it. An invalid model response is discarded, never rendered as truth. The wedding-draft route returns a **complete, schema-valid Brief** after normalization; the client shows assumptions and questions before the deterministic engine builds anything.
 
@@ -257,8 +278,8 @@ The client validates every AI response again before merging it. An invalid model
 - **Deterministic audit.** “What am I forgetting?” is computed by `auditPlan()` from budget, functions, vendors, deadlines, and tradition defaults. The model may phrase the gaps but cannot invent them.
 - **Untrusted data delimiters.** Plan data is wrapped in `<event_data>`, goals in `<user_goal>`, and chat turns in `<user_message>` / `<user_question>`; the system prompt says to ignore instructions inside them.
 - **Prompt-injection tripwire.** Both chatbots scan every chat turn (including forged assistant turns) for role-change, prompt-extraction, secret-extraction, and delimiter-injection patterns *before* any model call. A match returns a fixed refusal with `X-Eventas-Guard: blocked`. The rebalance goal, vendor-message intent, and wedding-draft message get the same treatment. This is defence in depth, not a claim of perfect detection; tests cover true positives, false positives, and zero-width-character evasion.
-- **Bounded context.** Only a compact snapshot is sent, with history capped at 12 messages and 2,000 characters per message. Guest lists are not sent because they do not exist yet.
-- **Rate limits.** 12 requests/minute per IP plus a 300/day global cap per instance.
+- **Bounded context.** Only a compact snapshot is sent, with history capped at 12 messages and 2,000 characters per message. Guest names, phone numbers, emails, travel, and notes are never sent; only aggregate headcounts and dietary counts are included.
+- **Rate limits.** 12 AI requests/minute per IP plus a 300/day global cap per instance; RSVP publish, reply, and link requests have their own 40/minute and 1,000/day caps.
 - **Timeouts and aborts.** 45s for JSON calls, 60s for streams, aborted when the client disconnects.
 - **Safe rendering.** No `dangerouslySetInnerHTML`; assistant Markdown is rendered as React text with bold/bullets only.
 - **Deterministic fallback.** Any provider error returns useful local content (including a locally parsed wedding draft and vendor message) instead of an error screen.
@@ -266,10 +287,11 @@ The client validates every AI response again before merging it. An invalid model
 ### Security posture
 
 - CSP, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, and COOP headers.
-- Zod-validated localStorage reads with a versioned schema and a v1→v2 migration; corrupt data is discarded.
+- Zod-validated IndexedDB reads with a versioned schema and v1→v3 migration; corrupt data is discarded. Imports are size-limited and schema-validated before they replace anything.
+- Optional guest RSVP links are HMAC-signed, expiring, per-guest tokens. The host key is stored locally and checked against a derived value; guest replies are validated against the functions on that invitation. Firestore rules deny all direct browser reads and writes, so the Admin SDK on Cloud Run is the only path.
 - No analytics, trackers, third-party cookies, uploads, authentication, or payment data.
 - Rate limiting is in-memory. It is appropriate for a single instance; a multi-instance deployment should use a shared store such as Redis.
-- The app sends only the compact plan snapshot to Groq. Notes and constraints are user-authored; users are told AI is involved and should avoid sensitive personal data.
+- The app sends only the compact plan snapshot to Groq. Notes and constraints are user-authored; users are told AI is involved and should avoid sensitive personal data. Backups contain guest details and are treated as private files.
 
 ### Accessibility
 
@@ -338,6 +360,24 @@ gcloud run deploy eventas \
 
 Put both keys in Secret Manager and grant the Cloud Run service account `roles/secretmanager.secretAccessor` on each; nothing sensitive enters the image or the build logs. Keep `--max-instances=1` because the assistant rate limiter and the daily translation budget are in memory and therefore per-instance — move both to Redis or Firestore before scaling out.
 
+**Optional hosted RSVP (Firebase Spark / Firestore):**
+
+```bash
+gcloud services enable firestore.googleapis.com
+gcloud firestore databases create --location=asia-south1 --type=firestore-native
+gcloud run services update eventas --region=asia-south1 \
+  --update-env-vars GOOGLE_CLOUD_PROJECT="$PROJECT" \
+  --update-secrets RSVP_SIGNING_SECRET=RSVP_SIGNING_SECRET:latest
+```
+
+Grant the Cloud Run service account `roles/datastore.user`, create a 32+ character `RSVP_SIGNING_SECRET` in Secret Manager, and deploy the deny-all rules:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+No Firebase Auth, client SDK, or billing account is required. Without these values the app stays fully usable and the RSVP panel reports that hosting is not configured.
+
 Live: [eventas-301104363527.asia-south1.run.app](https://eventas-301104363527.asia-south1.run.app)
 
 ### Languages
@@ -394,18 +434,20 @@ Eventas is tuned for phones as well as the desktop studio:
 
 ## Testing
 
-**150 automated tests across 17 files**, with **87% statement / 91% line coverage** on `lib/` and enforced thresholds (85% statements/lines/functions, 70% branches).
+**213 automated tests across 30 files**, with **86% statement / 90% line coverage** on `lib/` and enforced thresholds (85% statements/lines/functions, 70% branches).
 
 | Layer | Coverage |
 | --- | --- |
 | Domain engine | Budget sums, priority shifts, linear/sublinear/fixed guest scaling, cost index, floors, contingency, leap day, past dates, overdue ordering, pack invariants, exact per-function budget splits, function-anchored deadlines |
 | Traditions & content | City tiers, destination detection, curated muhurat dates/windows, tradition profiles, muhurat applicability, constraint normalization |
-| Validation | Brief, plan v2, functions, muhurat, AI output, wedding-draft schema, assistant limits, unknown keys, corrupt persistence, v1→v2 migration |
+| Validation | Brief, plan v3, functions, muhurat, guests, run sheet, RSVP payloads, AI output, wedding-draft schema, assistant limits, unknown keys, corrupt persistence, v1→v3 migration |
 | AI | JSON parsing, schema rejection, provider errors, SSE stream transformation, cache TTL/LRU, rate-limit windows, rebalance safety, natural-language wedding draft parsing, vendor-message drafting |
 | Languages | Language catalogue and native labels, entity decoding, batching and per-language caching, untranslatable-string filtering, prompt language directives, document translation, opted-out nodes, attribute translation, late-mounted content, restore to English |
 | Injection | Role-change, prompt/secret extraction, delimiter attempts, zero-width evasion, ordinary-question false positives, guarded draft routes |
 | API | 200 demo contracts, 400 malformed input, 429 abuse, guarded chatbot responses, safe fallback, wedding draft, vendor message, translation validation and graceful degradation |
-| Storage | Hydration, v1 migration, create/update/reset, persistence, enrichment merge, malformed responses |
+| Storage | IndexedDB hydration, v1/v2→v3 migration, multi-plan switch/archive/duplicate, persisted undo, backup validation, merge-preserving brief rebuild, malformed responses |
+| Guests & day-of | Guest summary and dietary aggregation, per-function seats, CSV import/export, run-sheet generation and clock wrapping, reminders, signed RSVP tokens and Firestore round trip |
+| Offline | Service-worker shell caching, offline reload, installed-app manifest, update-safe dev registration |
 | Presentation | axe scan of landing, chart text alternatives |
 | Browser | Wedding onboarding → budget edit → reload persistence; multi-day Functions + muhurat persistence; assistant context; full birthday wizard; brief edit; landing guide + injection refusal; mobile/desktop screenshots; axe on landing, guide, wizard, dashboard, assistant, and Functions; Hindi switch persists across reload, translates plan content, and both assistants send the selected language; calendar, CSV, and print-ready PDF export; undo; phone header fits with an animated menu sheet; pull-to-refresh reloads on release; landing and studio tours (event-aware steps, real view navigation, interactive milestone/vendor actions, resume after reload, skip vs dismiss, help/reset, phone bottom sheet, tablet/landscape/320px, replay from the menu) |
 
@@ -415,7 +457,7 @@ Playwright runs against a **production build** on port `3100` (`npm run build &&
 
 ## Assumptions
 
-- **Single active plan per browser.** Local-first keeps the product simple and private; starting a new plan asks for confirmation before replacing the active one.
+- **Multiple plans per browser, one active plan.** Plans can be switched, duplicated, archived, and restored. Everything stays local unless a host explicitly publishes RSVP links.
 - **INR and Indian date formatting.** Budgets use the rupee and Indian digit grouping (for example ₹40,00,000); costs are planning estimates, not live vendor quotes.
 - **No real vendor marketplace, availability, or bookings.** Vendor questions and red flags are guidance, not endorsements.
 - **No authentication or cloud sync.** Plans never leave the browser except for the compact AI context.
@@ -436,7 +478,7 @@ Playwright runs against a **production build** on port `3100` (`npm run build &&
 - No image or video assets; the visual system is CSS/SVG with self-hosted fonts.
 - Hand-rolled SVG charts instead of a charting dependency.
 - Assistant and heavy views are isolated client components; the landing page is statically prerendered.
-- localStorage writes are effect-based, so typing is not blocked by serialization.
+- IndexedDB writes are effect-based and serialized through a promise queue, so typing is not blocked and rapid edits cannot save out of order.
 
 ---
 
@@ -445,24 +487,25 @@ Playwright runs against a **production build** on port `3100` (`npm run build &&
 | Focus area | Where to look |
 | --- | --- |
 | **Code quality** | Feature-based structure, strict TypeScript, pure engines, domain-pack + tradition content layer, shared Zod schemas, small focused components |
-| **Security** | Server-only AI, output validation, prompt-injection delimiters, rate limits, payload caps, CSP and headers, no raw HTML, versioned local storage |
-| **Efficiency** | Deterministic baseline, cached AI, no assets, no chart library, on-demand AI, static landing page |
-| **Testing** | 123 tests, 90%+ statement coverage on `lib/`, API contracts, browser journeys, axe audit, CI |
+| **Security** | Server-only AI and RSVP signing, output validation, prompt-injection delimiters, rate limits, payload caps, CSP and headers, no raw HTML, versioned IndexedDB, deny-all Firestore rules |
+| **Efficiency** | Deterministic baseline, cached AI, no assets, no chart library, on-demand AI, offline shell, static landing page |
+| **Testing** | 212 tests, 86% statement / 90% line coverage on `lib/`, API contracts, 23 browser journeys, axe audit, CI |
 | **Accessibility** | Keyboard flows, focus management, live regions, chart alternatives, AA contrast, reduced motion, 44px targets |
-| **Problem alignment** | Weddings as the flagship vertical: multi-day functions, regional traditions, curated muhurat, verification-first budgets, plus working birthday and community packs |
+| **Problem alignment** | Weddings as the flagship vertical: multi-day functions, regional traditions, curated muhurat, verification-first budgets, guests, day-of run sheet, plus working birthday and community packs |
 
 ---
 
 ## Limitations and next steps
 
-- Add a guest list with per-function RSVP, plus-ones, dietary needs, travel, and seating.
+- Add seating charts and rooming lists on top of the guest list.
 - Add deposits, installments, payment due dates, and a cash-flow reminder view.
-- Add `.ics` calendar export and a guest-facing run sheet.
-- Add multiple saved plans/archive and optional encrypted cloud sync.
+- Add live collaboration and host accounts; the current RSVP layer is intentionally anonymous.
+- Add optional encrypted cloud sync and a passphrase-encrypted backup format.
 - Add a shared rate-limit store for multi-instance deployments.
 - Add Hinglish copy and a reviewed glossary for regional-language planning terms.
 - Expand city-level price benchmarks once a trustworthy, licensable data source is available.
 - Add optional BYO-key mode for judges who want live AI without a deployment secret.
+- Extend scheduled reminders beyond in-app and `.ics` alarms to email or WhatsApp, which needs a backend scheduler and consent.
 
 ---
 
